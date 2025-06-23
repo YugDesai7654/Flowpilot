@@ -47,59 +47,133 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        type: { label: "Type", type: "text" }, // 'login' or 'register'
+        confirmPassword: { label: "Confirm Password", type: "password", optional: true },
+        companyName: { label: "Company Name", type: "text", optional: true },
+        companyId: { label: "Company ID", type: "text", optional: true },
+        role: { label: "Role", type: "text", optional: true },
+        isNewCompany: { label: "Is New Company", type: "text", optional: true },
       },
       async authorize(credentials) {
         try {
-          if (!credentials?.email || !credentials?.password) {
-            throw new Error('Please enter your email and password')
+          await dbConnect();
+          const { email, password, type, confirmPassword, companyName, companyId, role, isNewCompany } = credentials as any;
+          if (!type) throw new Error('Missing type (login/register)');
+
+          // LOGIN LOGIC
+          if (type === 'login') {
+            // Validate login data
+            const { validateLoginData } = await import("@/helpers/validation");
+            const validation = validateLoginData({ email, password });
+            if (!validation.isValid) {
+              throw new Error(Object.values(validation.errors).join("; "));
+            }
+            const user = await User.findOne({ email, isActive: true });
+            if (!user) throw new Error('No user found with this email');
+            if (!user.isApproved && !user.isRejected) throw new Error('Your account is pending approval. Please wait for an admin to approve your request.');
+            if (user.isRejected) throw new Error('Your account has been rejected. Please contact your company admin.');
+            const isPasswordValid = await user.comparePassword(password);
+            if (!isPasswordValid) throw new Error('Invalid password');
+            user.lastLogin = new Date();
+            await user.save();
+            return {
+              id: user._id.toString(),
+              name: user.name || user.email.split('@')[0],
+              email: user.email,
+              role: user.role,
+              companyId: user.companyId,
+              companyName: user.companyName,
+            };
           }
 
-          await dbConnect()
-          
-          const user = await User.findOne({ email: credentials.email, isActive: true })
-          
-          if (!user) {
-            throw new Error('No user found with this email')
+          // REGISTRATION LOGIC
+          if (type === 'register') {
+            const { validateSignupData } = await import("@/helpers/validation");
+            const isNew = isNewCompany === 'true' || isNewCompany === true;
+            const validation = validateSignupData({ email, password, confirmPassword, companyName, companyId, role }, isNew);
+            if (!validation.isValid) {
+              throw new Error(Object.values(validation.errors).join("; "));
+            }
+            const Company = (await import("@/models/companyModel")).default;
+            // New company registration (owner)
+            if (isNew) {
+              // Check for existing company
+              const existingCompany = await Company.findOne({ companyName: { $regex: new RegExp(companyName, 'i') } });
+              if (existingCompany) throw new Error('Company name already exists');
+              // Check for existing user
+              const existingUser = await User.findOne({ email });
+              if (existingUser) throw new Error('Email already registered');
+              // Create company
+              const generateCompanyId = () => `COMP_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+              const company = new Company({
+                companyName,
+                adminEmail: email,
+                companyId: generateCompanyId(),
+              });
+              await company.save();
+              // Create owner user
+              const user = new User({
+                email,
+                password,
+                role: 'owner',
+                companyId: company.companyId,
+                companyName: company.companyName,
+                name: email.split('@')[0],
+                emailVerified: new Date(),
+                lastLogin: new Date(),
+                isApproved: true,
+                isRejected: false,
+                approvedBy: null,
+                rejectedBy: null,
+              });
+              await user.save();
+              return {
+                id: user._id.toString(),
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                companyId: user.companyId,
+                companyName: user.companyName,
+              };
+            } else {
+              // Register to existing company (admin/employee)
+              const company = await Company.findOne({ companyId, isActive: true });
+              if (!company) throw new Error('Invalid company ID');
+              const existingUser = await User.findOne({ email });
+              if (existingUser) throw new Error('Email already registered');
+              const user = new User({
+                email,
+                password,
+                role,
+                companyId: company.companyId,
+                companyName: company.companyName,
+                name: email.split('@')[0],
+                emailVerified: new Date(),
+                lastLogin: new Date(),
+                isApproved: false,
+                isRejected: false,
+                approvedBy: null,
+                rejectedBy: null,
+              });
+              await user.save();
+              return {
+                id: user._id.toString(),
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                companyId: user.companyId,
+                companyName: user.companyName,
+              };
+            }
           }
 
-          if (!user.isApproved && !user.isRejected) {
-            throw new Error('Your account is pending approval. Please wait for an admin to approve your request.')
-          }
-
-          if (user.isRejected) {
-            throw new Error('Your account has been rejected. Please contact your company admin.')
-          }
-
-          // Compare password using bcrypt
-          const isPasswordValid = await bcrypt.compare(credentials.password, user.password)
-
-          if (!isPasswordValid) {
-            console.error('Password validation failed for user:', user.email)
-            throw new Error('Invalid password')
-          }
-
-          // Update last login
-          user.lastLogin = new Date()
-          await user.save()
-
-          // Create a type-safe user object
-          const userData = {
-            id: user._id.toString(),
-            name: user.name || user.email.split('@')[0],
-            email: user.email,
-            role: user.role,
-            companyId: user.companyId,
-            companyName: user.companyName,
-          }
-
-          console.log('User authenticated successfully:', userData.email)
-          return userData
+          throw new Error('Invalid type for credentials provider');
         } catch (error) {
-          console.error('Auth error:', error)
+          console.error('Auth error:', error);
           if (error instanceof Error) {
-            throw new Error(error.message)
+            throw new Error(error.message);
           }
-          throw new Error('Authentication failed')
+          throw new Error('Authentication failed');
         }
       },
     }),

@@ -92,32 +92,24 @@ export default function AuthPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!validateForm()) return
-
     setIsLoading(true)
     setMessage("")
-
     try {
-      console.log('Attempting login...')
       const result = await signIn('credentials', {
         email: formData.email,
         password: formData.password,
+        type: 'login',
         redirect: false,
-        callbackUrl: '/profile'
+        callbackUrl: '/profile',
       })
-
-      console.log('SignIn result:', result)
-
       if (result?.error) {
         setMessage(result.error)
       } else if (result?.url) {
-        console.log('Login successful, redirecting to:', result.url)
         router.push(result.url)
       } else {
-        console.log('Login successful, redirecting to profile...')
         router.push('/profile')
       }
     } catch (error) {
-      console.error('Login error:', error)
       setMessage("Network error. Please try again.")
     } finally {
       setIsLoading(false)
@@ -127,50 +119,28 @@ export default function AuthPage() {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
     setMessage("")
-
     if (!validateForm()) return
-
     setIsLoading(true)
-
     try {
-      console.log('Starting signup process...')
-      const signupData = {
+      const signupResult = await signIn('credentials', {
         email: formData.email,
         password: formData.password,
         confirmPassword: formData.confirmPassword,
-        isNewCompany: signupType === "new",
-        ...(signupType === "new"
+        type: 'register',
+        isNewCompany: signupType === 'new',
+        ...(signupType === 'new'
           ? { companyName: formData.companyName }
           : { companyId: formData.companyId, role: formData.role }),
-      }
-
-      console.log('Sending signup data...')
-      const response = await fetch("/api/user/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(signupData),
+        redirect: false,
       })
-
-      const data = await response.json()
-      console.log('Signup response:', data)
-
-      if (response.ok) {
-        let successMessage = "Registration successful!";
-        if (signupType === "new") {
-          successMessage = `Company created successfully! Your Company ID is: ${data.companyId} Please log in.`;
-        } else {
-          successMessage = "Registration successful! Please wait for approval before logging in.";
-        }
-        setMessage(successMessage);
-        setActiveTab('login');
-        setIsLoading(false);
-        return;
+      if (signupResult?.error) {
+        setMessage(signupResult.error)
       } else {
-        setMessage(data.message || "Registration failed. Please try again.");
+        setMessage('Registration successful! Please wait for approval or log in.');
+        setActiveTab('login');
       }
     } catch (error) {
-      console.error('Signup error:', error)
-      setMessage(error instanceof Error ? error.message : "Network error. Please try again.")
+      setMessage("Network error. Please try again.")
     } finally {
       setIsLoading(false)
     }

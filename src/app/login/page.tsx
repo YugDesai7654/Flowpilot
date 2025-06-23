@@ -50,28 +50,26 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-
     if (!validateForm()) {
       return;
     }
-
     setIsLoading(true);
-
     try {
       const result = await signIn('credentials', {
         email: formData.email,
         password: formData.password,
+        type: 'login',
         redirect: false,
       });
-
       if (result?.error) {
-        throw new Error('Invalid email or password');
+        setError(result.error);
+      } else if (result?.url) {
+        window.location.href = result.url;
+      } else {
+        window.location.href = '/';
       }
-
-      // Redirect to home page with full URL
-      window.location.href = 'http://localhost:3000/';
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'An error occurred during login'
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred during login';
       setError(errorMessage);
     } finally {
       setIsLoading(false);
