@@ -110,6 +110,7 @@ export default function AuthPage() {
         router.push('/profile')
       }
     } catch (error) {
+      console.log(error)
       setMessage("Network error. Please try again.")
     } finally {
       setIsLoading(false)
@@ -140,7 +141,9 @@ export default function AuthPage() {
         setActiveTab('login');
       }
     } catch (error) {
+      console.log(error)
       setMessage("Network error. Please try again.")
+
     } finally {
       setIsLoading(false)
     }
