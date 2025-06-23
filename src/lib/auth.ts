@@ -2,7 +2,6 @@ import { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import dbConnect from "@/dbConfing/dbConfing"
 import User from "@/models/userModel"
-import bcrypt from "bcryptjs"
 
 interface UserSession {
   id: string;
@@ -57,7 +56,7 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         try {
           await dbConnect();
-          const { email, password, type, confirmPassword, companyName, companyId, role, isNewCompany } = credentials as any;
+          const { email, password, type, confirmPassword, companyName, companyId, role, isNewCompany } = credentials as { email: string; password: string; type?: string; confirmPassword?: string; companyName?: string; companyId?: string; role?: string; isNewCompany?: boolean | string };
           if (!type) throw new Error('Missing type (login/register)');
 
           // LOGIN LOGIC
@@ -98,7 +97,7 @@ export const authOptions: NextAuthOptions = {
             // New company registration (owner)
             if (isNew) {
               // Check for existing company
-              const existingCompany = await Company.findOne({ companyName: { $regex: new RegExp(companyName, 'i') } });
+              const existingCompany = await Company.findOne({ companyName: { $regex: new RegExp(companyName || '', 'i') } });
               if (existingCompany) throw new Error('Company name already exists');
               // Check for existing user
               const existingUser = await User.findOne({ email });
