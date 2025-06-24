@@ -23,7 +23,7 @@ const ProjectsPage = () => {
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
     const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'archived'>('all');
     const [favorites, setFavorites] = useState<string[]>([]);
-    const { status } = useSession();
+    const { data: session, status } = useSession();
 
     const fetchProjects = async () => {
         try {
@@ -104,11 +104,13 @@ const ProjectsPage = () => {
                 <div className="bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-500 py-6 px-6 rounded-2xl shadow-lg flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <h1 className="text-3xl md:text-4xl font-extrabold text-white drop-shadow tracking-tight">Projects</h1>
                     <div className="flex gap-2 items-center">
-                        <Link href="/projects/create">
-                            <Button className="bg-white/90 hover:bg-white text-blue-700 font-bold shadow flex items-center gap-2 px-5 py-2 rounded-lg text-base transition-transform hover:scale-105">
-                                <PlusIcon className="w-5 h-5" /> Create Project
-                            </Button>
-                        </Link>
+                        {session?.user?.role === 'admin' || session?.user?.role === 'owner' ? (
+                            <Link href="/projects/create">
+                                <Button className="bg-white/90 hover:bg-white text-blue-700 font-bold shadow flex items-center gap-2 px-5 py-2 rounded-lg text-base transition-transform hover:scale-105">
+                                    <PlusIcon className="w-5 h-5" /> Create Project
+                                </Button>
+                            </Link>
+                        ) : null}
                     </div>
                 </div>
             </div>
@@ -156,26 +158,26 @@ const ProjectsPage = () => {
                                 >
                                     <StarIcon className="w-5 h-5" />
                                 </button>
-                                {/* Archive Button for Active Projects */}
-                                {!project.isArchived && statusFilter !== 'archived' && (
-                                    <button
-                                        className="absolute top-3 left-3 z-10 rounded-full p-1.5 bg-white/90 hover:bg-red-100 shadow transition-colors duration-200 text-gray-400 hover:text-red-500"
-                                        onClick={e => { e.stopPropagation(); e.preventDefault(); handleArchive(project._id as string); }}
-                                        title="Archive Project"
-                                    >
-                                        <TrashIcon className="w-5 h-5" />
-                                    </button>
-                                )}
-                                {/* Unarchive Button for Archived Projects */}
-                                {project.isArchived && statusFilter === 'archived' && (
-                                    <button
-                                        className="absolute top-3 left-3 z-10 rounded-full p-1.5 bg-white/90 hover:bg-green-100 shadow transition-colors duration-200 text-gray-400 hover:text-green-600"
-                                        onClick={e => { e.stopPropagation(); e.preventDefault(); handleUnarchive(project._id as string); }}
-                                        title="Unarchive Project"
-                                    >
-                                        <ArrowUturnUpIcon className="w-5 h-5" />
-                                    </button>
-                                )}
+                                {/* Archive/Unarchive Buttons for Admin/Owner */}
+                                {session?.user?.role === 'admin' || session?.user?.role === 'owner' ? (
+                                    !project.isArchived ? (
+                                        <button
+                                            className="absolute top-3 left-3 z-10 rounded-full p-1.5 bg-white/90 hover:bg-red-100 shadow transition-colors duration-200 text-gray-400 hover:text-red-500"
+                                            onClick={e => { e.stopPropagation(); e.preventDefault(); handleArchive(project._id as string); }}
+                                            title="Archive Project"
+                                        >
+                                            <TrashIcon className="w-5 h-5" />
+                                        </button>
+                                    ) : (
+                                        <button
+                                            className="absolute top-3 left-3 z-10 rounded-full p-1.5 bg-white/90 hover:bg-green-100 shadow transition-colors duration-200 text-gray-400 hover:text-green-600"
+                                            onClick={e => { e.stopPropagation(); e.preventDefault(); handleUnarchive(project._id as string); }}
+                                            title="Unarchive Project"
+                                        >
+                                            <ArrowUturnUpIcon className="w-5 h-5" />
+                                        </button>
+                                    )
+                                ) : null}
                                 <Link href={`/projects/${project._id}`} className="block">
                                     <Card className="hover:shadow-xl transition-shadow duration-200 cursor-pointer rounded-2xl border border-gray-100 bg-white group-hover:-translate-y-1 group-hover:scale-[1.01] shadow overflow-hidden p-4 flex flex-col gap-2 min-h-[210px]">
                                         <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-500 via-indigo-400 to-purple-400 rounded-t-2xl" />
@@ -242,9 +244,11 @@ const ProjectsPage = () => {
                                 </svg>
                                 <div className="text-xl font-bold text-indigo-400 mb-1">No projects found</div>
                                 <div className="text-sm text-gray-400 mb-4">Start by creating your first project!</div>
-                                <Link href="/projects/create">
-                                    <Button className="bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-500 text-white font-bold px-5 py-2 rounded-lg shadow hover:scale-105 transition-transform text-base">Create Project</Button>
-                                </Link>
+                                {session?.user?.role === 'admin' || session?.user?.role === 'owner' ? (
+                                    <Link href="/projects/create">
+                                        <Button className="bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-500 text-white font-bold px-5 py-2 rounded-lg shadow hover:scale-105 transition-transform text-base">Create Project</Button>
+                                    </Link>
+                                ) : null}
                             </div>
                         )}
                     </div>
