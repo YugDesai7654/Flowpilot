@@ -13,7 +13,6 @@ import { MultiSelect } from '@/components/ui/multi-select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { IUser } from '@/models/userModel';
 import { IProject } from '@/models/projectModel';
-import { useSession } from 'next-auth/react';
 import { ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
 
 const projectSchema = z.object({
@@ -32,8 +31,8 @@ const EditProjectPage = () => {
     const router = useRouter();
     const params = useParams();
     const { id } = params;
-    const { data: session } = useSession();
-
+    const [user, setUser] = useState<any>(null);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [users, setUsers] = useState<IUser[]>([]);
     const [project, setProject] = useState<IProject | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -43,6 +42,17 @@ const EditProjectPage = () => {
     });
 
     useEffect(() => {
+        // Check authentication and get user
+        fetch('/api/user/profile', { credentials: 'include' })
+            .then(res => res.ok ? res.json() : null)
+            .then(data => {
+                if (data) {
+                    setUser(data);
+                    setIsAuthenticated(true);
+                } else {
+                    setIsAuthenticated(false);
+                }
+            });
         const fetchUsers = async () => {
             const res = await fetch('/api/users');
             if (res.ok) setUsers(await res.json());
@@ -66,7 +76,7 @@ const EditProjectPage = () => {
         if (id) fetchProject();
     }, [id, form]);
     
-    const canEditFinancials = session?.user?.role === 'admin' || session?.user?.role === 'owner';
+    const canEditFinancials = user?.role === 'admin' || user?.role === 'owner';
 
     const onSubmit = async (values: z.infer<typeof projectSchema>) => {
         setIsSubmitting(true);
@@ -88,6 +98,7 @@ const EditProjectPage = () => {
         }
     };
     
+    if (!isAuthenticated) return <div>Not authenticated. Please <a href="/signup">sign in</a>.</div>;
     if (!project) return <div>Loading...</div>
 
     return (

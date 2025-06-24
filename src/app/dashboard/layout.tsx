@@ -1,24 +1,26 @@
 import { DashboardContent } from "@/components/admin/dashboard-content"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth" 
-import dbConnect from "@/dbConfing/dbConfing" 
+import { cookies } from 'next/headers';
+import { verifyJwt } from '@/lib/jwt';
+import dbConnect from "@/dbConfing/dbConfing"
 import User from "@/models/userModel"
 import Company from "@/models/companyModel"
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  // 1. Get session
-  const session = await getServerSession(authOptions)
-  if (!session?.user?.email) {
-    return <div>Error: Not authenticated</div>
+  // 1. Get user from JWT in cookies
+  const cookieStore = cookies();
+  const token = (cookieStore as any).get('token')?.value;
+  const jwtUser = token ? verifyJwt(token) : null;
+  if (!jwtUser || typeof jwtUser !== 'object' || !('email' in jwtUser)) {
+    return <div>Error: Not authenticated</div>;
   }
 
   // 2. Connect to DB and fetch user
   await dbConnect()
-  const user = await User.findOne({ email: session.user.email }).lean()
+  const user = await User.findOne({ email: jwtUser.email }).lean()
 
   // Debug: log user
   if (!user) {
-    console.error("User not found for email:", session.user.email)
+    console.error("User not found for email:", jwtUser.email)
     return <div>Error: Could not retrieve user profile. Please log in again.</div>
   }
   if (user.role === "employee") {

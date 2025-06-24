@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
-import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,7 +22,7 @@ const ProjectsPage = () => {
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
     const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'archived'>('all');
     const [favorites, setFavorites] = useState<string[]>([]);
-    const { status } = useSession();
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
 
     const fetchProjects = async () => {
         try {
@@ -40,10 +39,17 @@ const ProjectsPage = () => {
     };
 
     useEffect(() => {
-        if (status === 'authenticated') {
-            fetchProjects();
-        }
-    }, [status]);
+        // Check authentication
+        fetch('/api/user/profile', { credentials: 'include' })
+            .then(res => {
+                if (res.ok) {
+                    setIsAuthenticated(true);
+                    fetchProjects();
+                } else {
+                    setIsAuthenticated(false);
+                }
+            });
+    }, []);
 
     const filteredProjects = useMemo(() => {
         let filtered = projects.filter(p =>
@@ -93,8 +99,11 @@ const ProjectsPage = () => {
         } catch {}
     };
 
-    if (loading || status === 'loading') {
+    if (loading) {
         return <div>Loading...</div>;
+    }
+    if (!isAuthenticated) {
+        return <div>Not authenticated. Please <a href="/signup">sign in</a>.</div>;
     }
 
     return (

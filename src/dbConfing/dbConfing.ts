@@ -1,8 +1,5 @@
 // File: dbConfig/dbConfig.ts
 import mongoose from 'mongoose';
-import '@/models/userModel';
-import '@/models/projectModel';
-import '@/models/taskModel';
 
 const MONGODB_URI = process.env.MONGO_URL;
 if (!MONGODB_URI) {
@@ -69,17 +66,5 @@ async function dbConnect(): Promise<typeof mongoose> {
   return cached.conn;
 }
 
-process.on('SIGINT', async () => {
-  try {
-    if (mongoose.connection.readyState !== 0) {
-      await mongoose.connection.close();
-      console.log('MongoDB connection closed through app termination');
-    }
-    process.exit(0);
-  } catch (err) {
-    console.error('Error closing MongoDB connection:', err);
-    process.exit(1);
-  }
-});
 export default dbConnect;
 

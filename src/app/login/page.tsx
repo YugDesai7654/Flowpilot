@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { signIn } from 'next-auth/react';
 import Image from 'next/image';
 
 interface FormData {
@@ -58,20 +57,20 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      const result = await signIn('credentials', {
-        email: formData.email,
-        password: formData.password,
-        redirect: false,
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+        credentials: 'include',
       });
-
-      if (result?.error) {
-        throw new Error('Invalid email or password');
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Invalid email or password');
       }
-
-      // Redirect to home page with full URL
-      window.location.href = 'http://localhost:3000/';
+      // Redirect to home page
+      window.location.href = '/profile';
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'An error occurred during login'
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred during login';
       setError(errorMessage);
     } finally {
       setIsLoading(false);

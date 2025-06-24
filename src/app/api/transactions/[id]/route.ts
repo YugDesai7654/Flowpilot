@@ -3,9 +3,7 @@ import dbConnect from "@/dbConfing/dbConfing"
 import Transaction from "@/models/transactionModel"
 import Bank from "@/models/bankModel"
 import mongoose from 'mongoose'
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import User from "@/models/userModel";
+import { getAuthUser } from "@/lib/getAuthUser";
 
 export const dynamic = 'force-dynamic'
 
@@ -22,12 +20,11 @@ export async function DELETE(
         { status: 400 }
       )
     }
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
+    const user = await getAuthUser(request);
+    if (!user?.email) {
       return NextResponse.json({ error: "Unauthorized: No session" }, { status: 401 });
     }
-    const user = await User.findOne({ email: session.user.email, isActive: true }).lean();
-    if (!user || !user.companyId) {
+    if (!user.companyId) {
       return NextResponse.json({ error: "Company ID not found for user" }, { status: 400 });
     }
     const companyId = user.companyId;
@@ -103,12 +100,11 @@ export async function PUT(
         { status: 400 }
       )
     }
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
+    const user = await getAuthUser(request);
+    if (!user?.email) {
       return NextResponse.json({ error: "Unauthorized: No session" }, { status: 401 });
     }
-    const user = await User.findOne({ email: session.user.email, isActive: true }).lean();
-    if (!user || !user.companyId) {
+    if (!user.companyId) {
       return NextResponse.json({ error: "Company ID not found for user" }, { status: 400 });
     }
     const companyId = user.companyId;

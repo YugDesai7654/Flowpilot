@@ -1,20 +1,15 @@
-import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { verifyJwt } from "@/lib/jwt";
 
-export default withAuth(
-  function middleware() {
-    // Add custom middleware logic here if needed
-    return NextResponse.next();
-  },
-  {
-    callbacks: {
-      authorized: ({ token }) => !!token,
-    },
-    pages: {
-      signIn: "/signup",
-    },
+export function middleware(request: NextRequest) {
+  const token = request.cookies.get("token")?.value;
+  if (!token || !verifyJwt(token)) {
+    console.log("Unauthorized access attempt. Token:", token);
+    return NextResponse.redirect(new URL("/signup", request.url));
   }
-);
+  return NextResponse.next();
+}
 
 export const config = {
   matcher: [

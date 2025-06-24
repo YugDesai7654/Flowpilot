@@ -30,7 +30,6 @@ import {
 } from "@/components/ui/sidebar"
 
 import { useState } from "react"
-import { signOut } from "next-auth/react"
 import { UserAccountDrawer } from "./user-account-drawer"
 
 export function NavUser({
@@ -50,7 +49,8 @@ export function NavUser({
   const [isAccountDrawerOpen, setIsAccountDrawerOpen] = useState(false)
 
   const handleLogout = async () => {
-    await signOut({ callbackUrl: "/" })
+    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+    window.location.href = '/login'
   }
 
   const handleAccountClick = () => {

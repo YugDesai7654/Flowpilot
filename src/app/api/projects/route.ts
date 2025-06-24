@@ -1,16 +1,14 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { NextRequest, NextResponse } from 'next/server';
 import Project from "@/models/projectModel";
 import User from "@/models/userModel";
 import dbConnect from "@/dbConfing/dbConfing";
+import { getAuthUser } from '@/lib/getAuthUser';
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   await dbConnect();
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session || !session.user || (session.user.role !== "admin" && session.user.role !== "owner")) {
+    const user = await getAuthUser(request);
+    if (!user || !['admin', 'owner'].includes(user.role)) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
@@ -19,11 +17,6 @@ export async function POST(request: Request) {
 
     if (!name || !description || !startDate || !endDate || !clientName || !projectHead) {
         return NextResponse.json({ message: "Missing required fields" }, { status: 400 });
-    }
-
-    const user = await User.findById(session.user.id);
-    if (!user) {
-      return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
     // Find the company by companyId
@@ -55,18 +48,12 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
     await dbConnect();
     try {
-        const session = await getServerSession(authOptions);
-
-        if (!session || !session.user) {
-            return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-        }
-
-        const user = await User.findById(session.user.id);
+        const user = await getAuthUser(request);
         if (!user) {
-            return NextResponse.json({ message: "User not found" }, { status: 404 });
+            return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
         }
 
         const Company = (await import("@/models/companyModel")).default;

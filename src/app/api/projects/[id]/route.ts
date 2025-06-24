@@ -1,18 +1,17 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
 import Project from "@/models/projectModel";
 import User from "@/models/userModel";
 import dbConnect from "@/dbConfing/dbConfing";
+import { getAuthUser } from '@/lib/getAuthUser';
 
-export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
     await dbConnect();
     try {
         const { params } = context;
         const awaitedParams = await params;
         const { id } = awaitedParams;
-        const session = await getServerSession(authOptions);
-        if (!session || !session.user) {
+        const user = await getAuthUser(request);
+        if (!user) {
             return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
         }
 
@@ -25,11 +24,6 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
             });
         if (!project) {
             return NextResponse.json({ message: "Project not found" }, { status: 404 });
-        }
-
-        const user = await User.findById(session.user.id);
-        if (!user) {
-            return NextResponse.json({ message: "User not found" }, { status: 404 });
         }
 
         const isEmployeeInProject = project.employees?.some((employee: { _id: string }) => 
@@ -47,20 +41,15 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     }
 }
 
-export async function PUT(request: Request, context: { params: Promise<{ id: string }> }) {
+export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
     await dbConnect();
     try {
         const { params } = context;
         const awaitedParams = await params;
         const { id } = awaitedParams;
-        const session = await getServerSession(authOptions);
-        if (!session || !session.user) {
-            return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-        }
-
-        const user = await User.findById(session.user.id);
+        const user = await getAuthUser(request);
         if (!user) {
-            return NextResponse.json({ message: "User not found" }, { status: 404 });
+            return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
         }
 
         const project = await Project.findById(id);
@@ -97,14 +86,14 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     }
 }
 
-export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
+export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
     await dbConnect();
     try {
         const { params } = context;
         const awaitedParams = await params;
         const { id } = awaitedParams;
-        const session = await getServerSession(authOptions);
-        if (!session || !session.user || (session.user.role !== 'admin' && session.user.role !== 'owner')) {
+        const user = await getAuthUser(request);
+        if (!user || !['admin', 'owner'].includes(user.role)) {
             return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
         }
 

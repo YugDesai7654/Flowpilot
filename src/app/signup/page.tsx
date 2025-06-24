@@ -12,7 +12,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2, Building2, Users, LogIn, UserPlus, Lock, Mail } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { signIn } from 'next-auth/react'
 import Image from 'next/image'
 
 interface FormData {
@@ -56,17 +55,19 @@ export default function AuthPage() {
 
     if (!formData.email.trim()) {
       newErrors.email = "Email is required"
-    } else if (!/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(formData.email)) {
+    } else if (!/^[\w.-]+@[\w.-]+\.\w{2,3}$/.test(formData.email)) {
       newErrors.email = "Please enter a valid email"
     }
 
     if (!formData.password) {
       newErrors.password = "Password is required"
-    } else if (activeTab === "signup" && formData.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters long"
     }
 
     if (activeTab === "signup") {
+      if (formData.password.length < 6) {
+        newErrors.password = "Password must be at least 6 characters long"
+      }
+
       if (formData.password !== formData.confirmPassword) {
         newErrors.confirmPassword = "Passwords do not match"
       }
@@ -80,7 +81,7 @@ export default function AuthPage() {
           newErrors.companyId = "Company ID is required"
         }
         if (!formData.role) {
-          newErrors.role = "Please select a role"
+          newErrors.role = "Role is required"
         }
       }
     }
@@ -97,28 +98,20 @@ export default function AuthPage() {
     setMessage("")
 
     try {
-      console.log('Attempting login...')
-      const result = await signIn('credentials', {
-        email: formData.email,
-        password: formData.password,
-        redirect: false,
-        callbackUrl: '/profile'
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: formData.email, password: formData.password }),
+        credentials: 'include',
       })
-
-      console.log('SignIn result:', result)
-
-      if (result?.error) {
-        setMessage(result.error)
-      } else if (result?.url) {
-        console.log('Login successful, redirecting to:', result.url)
-        router.push(result.url)
+      const result = await res.json()
+      if (!res.ok) {
+        setMessage(result.message || 'Invalid email or password')
       } else {
-        console.log('Login successful, redirecting to profile...')
         router.push('/profile')
       }
     } catch (error) {
-      console.error('Login error:', error)
-      setMessage("Network error. Please try again.")
+      setMessage('Network error. Please try again.')
     } finally {
       setIsLoading(false)
     }
@@ -126,51 +119,35 @@ export default function AuthPage() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
-    setMessage("")
-
     if (!validateForm()) return
 
     setIsLoading(true)
+    setMessage("")
+
+    const payload = {
+      ...formData,
+      isNewCompany: signupType === "new"
+    }
 
     try {
-      console.log('Starting signup process...')
-      const signupData = {
-        email: formData.email,
-        password: formData.password,
-        confirmPassword: formData.confirmPassword,
-        isNewCompany: signupType === "new",
-        ...(signupType === "new"
-          ? { companyName: formData.companyName }
-          : { companyId: formData.companyId, role: formData.role }),
-      }
-
-      console.log('Sending signup data...')
-      const response = await fetch("/api/user/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(signupData),
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        credentials: 'include',
       })
-
-      const data = await response.json()
-      console.log('Signup response:', data)
-
-      if (response.ok) {
-        let successMessage = "Registration successful!";
-        if (signupType === "new") {
-          successMessage = `Company created successfully! Your Company ID is: ${data.companyId} Please log in.`;
-        } else {
-          successMessage = "Registration successful! Please wait for approval before logging in.";
+      const result = await res.json()
+      if (!res.ok) {
+        setMessage(result.message || 'Signup failed')
+        if (result.errors) {
+          setErrors(result.errors)
         }
-        setMessage(successMessage);
-        setActiveTab('login');
-        setIsLoading(false);
-        return;
       } else {
-        setMessage(data.message || "Registration failed. Please try again.");
+        setMessage('Signup successful! Please wait for admin approval.')
+        setErrors({})
       }
     } catch (error) {
-      console.error('Signup error:', error)
-      setMessage(error instanceof Error ? error.message : "Network error. Please try again.")
+      setMessage('Network error. Please try again.')
     } finally {
       setIsLoading(false)
     }

@@ -4,6 +4,11 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { ITask } from '@/models/taskModel';
 import { IUser } from '@/models/userModel';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import Link from 'next/link';
+import { CheckCircleIcon, UserGroupIcon, CalendarIcon, CurrencyDollarIcon, ClipboardDocumentListIcon, ArrowTrendingUpIcon, UsersIcon, PlusIcon, ClockIcon } from '@heroicons/react/24/outline';
+import React from 'react';
 
 interface ProjectWithTasks {
   _id: string;
@@ -18,22 +23,31 @@ interface ProjectWithTasks {
   tasks: ITask[];
   employees: IUser[];
 }
-import { useSession } from "next-auth/react";
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import Link from 'next/link';
-import { CheckCircleIcon, UserGroupIcon, CalendarIcon, CurrencyDollarIcon, ClipboardDocumentListIcon, ArrowTrendingUpIcon, UsersIcon, PlusIcon, ClockIcon } from '@heroicons/react/24/outline';
-import React from 'react';
 
 const ProjectDetailsPage = () => {
     const params = useParams();
     const { id } = params;
     const [project, setProject] = useState<ProjectWithTasks | null>(null);
     const [loading, setLoading] = useState(true);
-    const { data: session } = useSession();
+    const [user, setUser] = useState<any>(null);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
 
     useEffect(() => {
-        if (id) {
+        // Check authentication and get user
+        fetch('/api/user/profile', { credentials: 'include' })
+            .then(res => res.ok ? res.json() : null)
+            .then(data => {
+                if (data) {
+                    setUser(data);
+                    setIsAuthenticated(true);
+                } else {
+                    setIsAuthenticated(false);
+                }
+            });
+    }, []);
+
+    useEffect(() => {
+        if (id && isAuthenticated) {
             const fetchProject = async () => {
                 try {
                     const res = await fetch(`/api/projects/${id}`);
@@ -49,7 +63,7 @@ const ProjectDetailsPage = () => {
             };
             fetchProject();
         }
-    }, [id]);
+    }, [id, isAuthenticated]);
 
     const handleTaskStatusChange = async (taskId: string, status: string) => {
         try {
@@ -71,11 +85,15 @@ const ProjectDetailsPage = () => {
         }
     };
     
-    const canEditDetails = session?.user?.role === 'admin' || session?.user?.role === 'owner' || project?.projectHead === session?.user.id;
-    const canMarkTaskComplete = project?.projectHead === session?.user.id;
+    const canEditDetails = user?.role === 'admin' || user?.role === 'owner' || project?.projectHead === user?.id;
+    const canMarkTaskComplete = project?.projectHead === user?.id;
 
     if (loading) {
         return <div>Loading...</div>;
+    }
+
+    if (!isAuthenticated) {
+        return <div>Not authenticated. Please <a href="/signup">sign in</a>.</div>;
     }
 
     if (!project) {
@@ -197,7 +215,7 @@ const ProjectDetailsPage = () => {
                                                     <div className="text-gray-600 text-xs">{task.description}</div>
                                                     <div className="text-xs text-gray-500">Assigned to: {typeof task.assignedTo === 'object' && task.assignedTo && 'name' in task.assignedTo ? (task.assignedTo as { name?: string }).name || 'Unassigned' : 'Unassigned'}</div>
                                                     {task.completionDate && <div className="text-xs text-green-600">Completed: {new Date(task.completionDate).toLocaleDateString()}</div>}
-                                                    {(canMarkTaskComplete || session?.user.role === 'admin' || session?.user.role === 'owner') && (
+                                                    {(canMarkTaskComplete || user?.role === 'admin' || user?.role === 'owner') && (
                                                         <Select value={task.status} onValueChange={(value) => handleTaskStatusChange(task._id as string, value)}>
                                                             <SelectTrigger className="w-[100px] mt-1 text-xs h-7">
                                                                 <SelectValue placeholder="Status" />

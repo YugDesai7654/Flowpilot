@@ -1,31 +1,39 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { useSession, signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { Menu, Home, BarChart3, FolderKanban, User, Settings, LogOut } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
-// import dbConnect from "@/dbConfing/dbConfing"
 
+async function getCurrentUser() {
+  const res = await fetch('/api/user/profile', { credentials: 'include' });
+  if (!res.ok) return null;
+  return res.json();
+}
+
+async function logout() {
+  await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+  window.location.href = '/login';
+}
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
-  const { data: session, status } = useSession()
+  const [user, setUser] = useState<any>(null)
+
+  useEffect(() => {
+    getCurrentUser().then(setUser)
+  }, [])
 
   const navItems = [
     { name: "Home", href: "/", icon: Home, description: "Go to main dashboard" },
     { name: "Finance Dashboard", href: "/dashboard", icon: BarChart3, description: "View financial overview" },
     { name: "Current Projects", href: "/projects", icon: FolderKanban, description: "Manage your projects" },
   ]
-
-  const handleSignOut = async () => {
-    await signOut({ callbackUrl: '/' })
-  }
 
   return (
     <nav className="sticky top-0 z-50 w-full mt-2 md:mt-4">
@@ -61,32 +69,33 @@ export function Navbar() {
 
           {/* User Profile & Mobile Menu */}
           <div className="flex items-center space-x-2 md:space-x-4">
-            {status === 'authenticated' ? (
+            {user ? (
               <>
-                {/* User Profile Dropdown - Hidden on small mobile */}
+                {/* User Profile Dropdown */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild className="hidden sm:flex">
                     <Button variant="ghost" className="relative h-8 w-8 md:h-10 md:w-10 rounded-full hover:ring-2 hover:ring-blue-200 transition-all">
                       <Avatar className="h-8 w-8 md:h-10 md:w-10">
-                        <AvatarImage src="/placeholder.svg?height=32&width=32" alt={session.user?.name || 'User'} />
+                        <AvatarImage src="/placeholder.svg?height=32&width=32" alt={user.name || 'User'} />
                         <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white font-semibold">
-                          {session.user?.name?.charAt(0) || 'U'}
+                          {user.name?.charAt(0) || 'U'}
                         </AvatarFallback>
                       </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuContent>
                     <div className="flex items-center space-x-2 p-2">
                       <Avatar className="h-8 w-8">
-                        <AvatarImage src="/placeholder.svg?height=32&width=32" alt={session.user?.name || 'User'} />
+                        <AvatarImage src="/placeholder.svg?height=32&width=32" alt={user.name || 'User'} />
                         <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white">
-                          {session.user?.name?.charAt(0) || 'U'}
+                          {user.name?.charAt(0) || 'U'}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium leading-none">{session.user?.name || 'User'}</p>
+                        <p className="text-sm font-medium leading-none">{user.name || 'User'}</p>
+                        <p className="text-sm font-medium leading-none">{user.email || 'user@example.com'}</p>
                         <p className="text-xs leading-none text-muted-foreground">
-                          {session.user?.email || 'user@example.com'}
+                          {user.email || 'user@example.com'}
                         </p>
                       </div>
                     </div>
@@ -104,7 +113,7 @@ export function Navbar() {
                       </DropdownMenuItem>
                     </Link>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-red-600 focus:text-red-600">
+                    <DropdownMenuItem onClick={logout} className="cursor-pointer text-red-600 focus:text-red-600">
                       <LogOut className="mr-2 h-4 w-4" />
                       <span>Log out</span>
                     </DropdownMenuItem>
@@ -178,22 +187,22 @@ export function Navbar() {
 
                   {/* User Section */}
                   <div className="px-6 py-4 bg-gray-50">
-                    {status === 'authenticated' ? (
+                    {user ? (
                       <div className="space-y-3">
                         {/* User Info */}
                         <div className="flex items-center space-x-3 p-3 rounded-lg bg-white border">
                           <Avatar className="h-10 w-10">
-                            <AvatarImage src="/placeholder.svg?height=40&width=40" alt={session.user?.name || 'User'} />
+                            <AvatarImage src="/placeholder.svg?height=40&width=40" alt={user.name || 'User'} />
                             <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white font-semibold">
-                              {session.user?.name?.charAt(0) || 'U'}
+                              {user.name?.charAt(0) || 'U'}
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold text-gray-900 truncate">
-                              {session.user?.name || 'User'}
+                              {user.name || 'User'}
                             </p>
                             <p className="text-xs text-gray-500 truncate">
-                              {session.user?.email || 'user@example.com'}
+                              {user.email || 'user@example.com'}
                             </p>
                           </div>
                         </div>
@@ -216,7 +225,7 @@ export function Navbar() {
                             variant="ghost" 
                             className="w-full justify-start text-left hover:bg-red-50 text-red-600 hover:text-red-700"
                             onClick={() => {
-                              handleSignOut()
+                              logout()
                               setIsOpen(false)
                             }}
                           >

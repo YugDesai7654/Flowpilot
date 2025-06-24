@@ -1,17 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/dbConfing/dbConfing';
 import User from '@/models/userModel';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getAuthUser } from '@/lib/getAuthUser';
 
 export async function POST(request: NextRequest) {
   try {
     await dbConnect();
-    const session = await getServerSession(authOptions);
-    if (!session || !session.user) {
+    const jwtUser = getAuthUser();
+    if (!jwtUser || !('email' in jwtUser)) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
-    const currentUser = await User.findOne({ email: session.user.email });
+    const currentUser = await User.findOne({ email: jwtUser.email });
     if (!currentUser || !['admin', 'owner'].includes(currentUser.role)) {
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
     }

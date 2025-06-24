@@ -1,18 +1,16 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/dbConfing/dbConfing';
 import User from '@/models/userModel';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getAuthUser } from '@/lib/getAuthUser';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     await dbConnect();
-    const session = await getServerSession(authOptions);
-    if (!session || !session.user) {
+    const currentUser = await getAuthUser(request);
+    if (!currentUser) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
-    const currentUser = await User.findOne({ email: session.user.email });
-    if (!currentUser || !['admin', 'owner'].includes(currentUser.role)) {
+    if (!['admin', 'owner'].includes(currentUser.role)) {
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
     }
     const employees = await User.find({ companyId: currentUser.companyId })

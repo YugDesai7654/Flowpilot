@@ -1,21 +1,20 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
+import { cookies } from 'next/headers';
+import { getAuthUser } from '@/lib/getAuthUser';
 import Project from "@/models/projectModel";
 import Task from "@/models/taskModel";
 import User from "@/models/userModel";
 import dbConnect from "@/dbConfing/dbConfing";
 
-export async function PUT(request: Request, context: { params: Promise<{ id: string }> }) {
+export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
     const params = await context.params;
     await dbConnect();
     try {
-        const session = await getServerSession(authOptions);
-        if (!session || !session.user) {
+        const jwtUser = await getAuthUser(request);
+        if (!jwtUser || !('id' in jwtUser)) {
             return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
         }
-
-        const user = await User.findById(session.user.id);
+        const user = await User.findById(jwtUser.id);
         if (!user) {
             return NextResponse.json({ message: "User not found" }, { status: 404 });
         }
@@ -56,16 +55,15 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     }
 }
 
-export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
+export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
     const params = await context.params;
     await dbConnect();
     try {
-        const session = await getServerSession(authOptions);
-        if (!session || !session.user) {
+        const jwtUser = await getAuthUser(request);
+        if (!jwtUser || !('id' in jwtUser)) {
             return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
         }
-
-        const user = await User.findById(session.user.id);
+        const user = await User.findById(jwtUser.id);
         if (!user) {
             return NextResponse.json({ message: "User not found" }, { status: 404 });
         }

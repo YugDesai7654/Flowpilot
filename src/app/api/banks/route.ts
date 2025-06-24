@@ -1,22 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
 import dbConnect from '@/dbConfing/dbConfing';
 import Bank from '@/models/bankModel';
 import User from '@/models/userModel';
+import { getAuthUser } from '@/lib/getAuthUser';
 
 // GET - Fetch all banks for the company
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
+    await dbConnect();
+    
+    const jwtUser = await getAuthUser(request);
+    if (!jwtUser || !('email' in jwtUser)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    await dbConnect();
-    
     // Get user and their company ID
-    const user = await User.findOne({ email: session.user.email }).lean();
+    const user = await User.findOne({ email: jwtUser.email }).lean();
     if (!user || !user.companyId) {
       return NextResponse.json({ error: 'User not found or no company associated' }, { status: 404 });
     }
@@ -34,15 +33,15 @@ export async function GET() {
 // POST - Create a new bank
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
+    await dbConnect();
+    
+    const jwtUser = await getAuthUser(request);
+    if (!jwtUser || !('email' in jwtUser)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    await dbConnect();
-    
     // Get user and their company ID
-    const user = await User.findOne({ email: session.user.email }).lean();
+    const user = await User.findOne({ email: jwtUser.email }).lean();
     if (!user || !user.companyId) {
       return NextResponse.json({ error: 'User not found or no company associated' }, { status: 404 });
     }

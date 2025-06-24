@@ -1,50 +1,25 @@
-import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/dbConfing/dbConfing';
 import User from '@/models/userModel';
+import { getAuthUser } from '@/lib/getAuthUser';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    console.log('Fetching user profile...');
-    
-    // Get the session
-    const session = await getServerSession(authOptions);
-    
-    if (!session?.user?.email) {
-      console.log('No session or email found');
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Connect to database
     await dbConnect();
-    
-    // Find user
-    const user = await User.findOne({ email: session.user.email, isActive: true }).lean();
-    
-    if (!user || !user.companyId) {
-      console.log('User not found or missing companyId:', session.user.email);
-      return NextResponse.json({ message: 'User not found or missing companyId' }, { status: 404 });
+    const jwtUser = await getAuthUser(request);
+    if (!jwtUser || !('email' in jwtUser)) {
+      console.log('Unauthorized access attempt. JWT user:', jwtUser);
+      return NextResponse.json({ message: 'Unauthorized', debug: { jwtUser } }, { status: 401 });
     }
-
-    console.log('User found:', user._id);
-
-    // Return user profile
-    return NextResponse.json({
-      email: user.email,
-      role: user.role,
-      companyId: user.companyId,
-      companyName: user.companyName,
-      isActive: user.isActive,
-      lastLogin: user.lastLogin,
-      createdAt: user.createdAt
-    });
-
-  } catch (error) {
-    console.error('Profile fetch error:', error);
-    return NextResponse.json(
-      { message: 'Internal server error' },
-      { status: 500 }
-    );
+    const user = await User.findOne({ email: jwtUser.email });
+    if (!user) {
+      console.log('User not found for email:', jwtUser.email);
+      return NextResponse.json({ message: 'User not found', debug: { email: jwtUser.email } }, { status: 404 });
+    }
+    return NextResponse.json({ user }, { status: 200 });
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Profile error:', error);
+    return NextResponse.json({ message: 'Internal server error', error: errorMessage, debug: { error } }, { status: 500 });
   }
 } 

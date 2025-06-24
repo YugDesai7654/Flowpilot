@@ -2,9 +2,6 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useSession } from 'next-auth/react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { toast } from 'react-hot-toast';
 import { Copy, Loader2, Building2, Mail, Shield, Calendar, Clock, User as UserIcon } from 'lucide-react';
@@ -13,6 +10,8 @@ import { Navbar } from '@/components/ui/navbar';
 import { motion } from 'framer-motion';
 import { Separator } from '@/components/ui/separator';
 import { Avatar } from '@/components/ui/avatar';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 interface UserProfile {
   email: string;
@@ -26,59 +25,34 @@ interface UserProfile {
 
 function ProfilePage() {
   const router = useRouter();
-  const { data: session, status } = useSession({
-    required: true,
-    onUnauthenticated() {
-      router.push('/signup');
-    },
-  }) as { data: { user?: { email?: string } } | null; status: 'authenticated' | 'loading' | 'unauthenticated' };
-
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
-      if (!session?.user?.email) return;
-      
       try {
-        console.log('Fetching user profile...');
         const response = await fetch('/api/user/profile', {
           method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
         });
-        
-        console.log('Profile response status:', response.status);
-        
         if (!response.ok) {
           if (response.status === 401) {
-            console.log('Unauthorized, redirecting to signup...');
             router.push('/signup');
             return;
           }
           throw new Error('Failed to fetch profile');
         }
-        
         const data = await response.json();
-        console.log('Profile data received:', data);
         setUserProfile(data);
       } catch (error) {
-        console.error('Profile fetch error:', error);
-        toast.error('Failed to load profile');
+        setUserProfile(null);
       } finally {
         setLoading(false);
       }
     };
-
-    if (status === 'authenticated') {
-      fetchUserProfile();
-    } else if (status === 'unauthenticated') {
-      console.log('User is not authenticated, redirecting to signup...');
-      router.push('/signup');
-    }
-  }, [session, status, router]);
+    fetchUserProfile();
+  }, [router]);
 
   const copyCompanyId = () => {
     if (userProfile?.companyId) {
@@ -87,7 +61,7 @@ function ProfilePage() {
     }
   };
 
-  if ((status === 'loading' || status === 'unauthenticated') || loading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
         <Navbar />
@@ -128,8 +102,6 @@ function ProfilePage() {
       hour12: true
     });
   };
-
-
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-100 to-white relative overflow-x-hidden">

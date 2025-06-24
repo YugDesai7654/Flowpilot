@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
 import dbConnect from '@/dbConfing/dbConfing';
 import Bank from '@/models/bankModel';
 import User from '@/models/userModel';
+import { getAuthUser } from '@/lib/getAuthUser';
 
 // PUT - Update a bank
 export async function PUT(
@@ -12,19 +11,13 @@ export async function PUT(
 ) {
   const params = await context.params;
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    await dbConnect();
-    
-    // Get user and their company ID
-    const user = await User.findOne({ email: session.user.email }).lean();
+    const user = await getAuthUser(request);
     if (!user || !user.companyId) {
       return NextResponse.json({ error: 'User not found or no company associated' }, { status: 404 });
     }
 
+    await dbConnect();
+    
     const body = await request.json();
     const { bankName, ifscCode, accountNumber, accountType, currentAmount } = body;
 
@@ -85,19 +78,13 @@ export async function DELETE(
 ) {
   const params = await context.params;
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    await dbConnect();
-    
-    // Get user and their company ID
-    const user = await User.findOne({ email: session.user.email }).lean();
+    const user = await getAuthUser(request);
     if (!user || !user.companyId) {
       return NextResponse.json({ error: 'User not found or no company associated' }, { status: 404 });
     }
 
+    await dbConnect();
+    
     // Find and delete the bank
     const bank = await Bank.findByBankIdAndCompany(params.id, user.companyId);
     if (!bank) {
