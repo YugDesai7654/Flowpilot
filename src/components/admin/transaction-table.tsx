@@ -279,7 +279,7 @@ export default function TransactionTable({ data: initialData }: TransactionTable
           accessorKey: "amount",
           header: "Amount",
           cell: ({ row }: { row: { original: z.infer<typeof schema> } }) => (
-            <span className={row.original.amount >= 0 ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}>
+            <span className={row.original.type === 'expense' ? "text-red-600 font-semibold" : "text-green-600 font-semibold"}>
               {new Intl.NumberFormat('en-US', {
                 style: 'currency',
                 currency: 'USD'
