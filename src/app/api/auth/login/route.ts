@@ -60,17 +60,23 @@ export async function POST(request: NextRequest) {
     }
 
     user.lastLogin = new Date();
-    await user.save();
+    const savedUser = await user.save();
+    console.log(savedUser._id)
 
     // Create JWT and set as httpOnly cookie
-    const token = signJwt({
-      id: user._id,
-      email: user.email,
-      role: user.role,
-      companyId: user.companyId,
-      companyName: user.companyName,
-      name: user.name
-    });
+    const payload = {
+      id: savedUser._id,
+      email: savedUser.email,
+      role: savedUser.role,
+      companyId: savedUser.companyId,
+      companyName: savedUser.companyName,
+      name: savedUser.name
+    };
+    const token = signJwt(payload);
+
+    // Debug: Log the payload and token
+    console.log('JWT payload:', payload);
+    console.log('Generated JWT token:', token);
 
     console.log('Login successful for user:', email);
 
@@ -91,6 +97,7 @@ export async function POST(request: NextRequest) {
     response.cookies.set('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
       path: '/',
       maxAge: 30 * 24 * 60 * 60 // 30 days
     });
@@ -104,4 +111,4 @@ export async function POST(request: NextRequest) {
       debug: { error: error instanceof Error ? error.message : error }
     }, { status: 500 });
   }
-} 
+}

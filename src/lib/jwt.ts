@@ -1,20 +1,28 @@
 import jwt from "jsonwebtoken"
 
-const JWT_SECRET = process.env.JWT_SECRET || "9cdH4+GLuK+sxOnmHCIlNSkLiMvjdo1bP3pvxBsVY8g="
+// Dynamically retrieve JWT secret to avoid caching module-level constant
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('Missing JWT_SECRET environment variable');
+  }
+  return secret;
+}
 
 export function signJwt(payload: object) {
-  console.log("JWT_SECRET signJwt : ", process.env.JWT_SECRET)
-  console.log("JWT_SECRET used in signJwt : ", JWT_SECRET)
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: '30d' })
+  const secret = getJwtSecret();
+  console.log("Signing JWT with secret:", secret ? '***' : 'undefined');
+  return jwt.sign(payload, secret, { expiresIn: '30d' });
 }
 
 export function verifyJwt(token: string) {
-  console.log("JWT_SECRET verifyJwt : ", process.env.JWT_SECRET)
-  console.log("JWT_SECRET used in verifyJwt : ", JWT_SECRET)
-    try {
-    return jwt.verify(token, JWT_SECRET)
-  } catch {
-    console.log("Invalid token:", token)
-    return null
+  const secret = getJwtSecret();
+  console.log("Verifying JWT with secret:", secret ? '***' : 'undefined');
+  try {
+    return jwt.verify(token, secret);
+  } catch (err: any) {
+    console.log("JWT verification error:", err.message);
+    console.log("Invalid token:", token);
+    return null;
   }
-} 
+}

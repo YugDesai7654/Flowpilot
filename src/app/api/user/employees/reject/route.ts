@@ -6,7 +6,7 @@ import { getAuthUser } from '@/lib/getAuthUser';
 export async function POST(request: NextRequest) {
   try {
     await dbConnect();
-    const jwtUser = getAuthUser();
+    const jwtUser = await getAuthUser(request);
     if (!jwtUser || !('email' in jwtUser)) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
