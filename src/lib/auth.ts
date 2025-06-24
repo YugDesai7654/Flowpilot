@@ -1,7 +1,6 @@
 import dbConnect from "@/dbConfing/dbConfing"
 import User from "@/models/userModel"
 import bcrypt from "bcryptjs"
-import { signJwt } from "@/lib/jwt"
 
 export async function authenticateUser(email: string, password: string) {
   await dbConnect()
@@ -22,5 +21,6 @@ export async function authenticateUser(email: string, password: string) {
     companyName: user.companyName,
   }
 }
+
 
 export { signJwt } from "@/lib/jwt" 
