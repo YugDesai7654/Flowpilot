@@ -28,25 +28,27 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
         const project = task.project as { projectHead: { equals: (id: unknown) => boolean }; _id: unknown };
         const isProjectHead = project.projectHead.equals(user._id);
 
+        // Only admin, owner, or project head can update any field
+        if (user.role !== 'admin' && user.role !== 'owner' && !isProjectHead) {
+            return NextResponse.json({ message: "Forbidden: Only admin, owner, or project head can update tasks" }, { status: 403 });
+        }
+
         const body = await request.json();
         const { name, description, assignedTo, status } = body;
 
-        const updateData: Record<string, unknown> = { name, description, assignedTo };
-
-        if (status) {
-            if (user.role === 'admin' || user.role === 'owner' || isProjectHead) {
-                updateData.status = status;
-                if (status === 'Done') {
-                    updateData.completionDate = new Date();
-                } else {
-                    // If task is moved from 'Done' to something else, clear completion date
-                    updateData.completionDate = undefined; 
-                }
+        const updateData: Record<string, unknown> = {};
+        if (name !== undefined) updateData.name = name;
+        if (description !== undefined) updateData.description = description;
+        if (assignedTo !== undefined) updateData.assignedTo = assignedTo;
+        if (status !== undefined) {
+            updateData.status = status;
+            if (status === 'Done') {
+                updateData.completionDate = new Date();
             } else {
-                return NextResponse.json({ message: "Forbidden: Only project head can update task status" }, { status: 403 });
+                updateData.completionDate = undefined;
             }
         }
-        
+
         const updatedTask = await Task.findByIdAndUpdate(params.id, updateData, { new: true });
 
         return NextResponse.json(updatedTask, { status: 200 });

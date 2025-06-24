@@ -22,7 +22,7 @@ import { useSession } from "next-auth/react";
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Link from 'next/link';
-import { CheckCircleIcon, UserGroupIcon, CalendarIcon, CurrencyDollarIcon, ClipboardDocumentListIcon, ArrowTrendingUpIcon, UsersIcon, PlusIcon, ClockIcon } from '@heroicons/react/24/outline';
+import { CheckCircleIcon, UserGroupIcon, CalendarIcon, CurrencyDollarIcon, ClipboardDocumentListIcon, ArrowTrendingUpIcon, UsersIcon, PlusIcon, ClockIcon, TrashIcon } from '@heroicons/react/24/outline';
 import React from 'react';
 
 const ProjectDetailsPage = () => {
@@ -71,8 +71,43 @@ const ProjectDetailsPage = () => {
         }
     };
     
-    const canEditDetails = session?.user?.role === 'admin' || session?.user?.role === 'owner' || project?.projectHead === session?.user.id;
-    const canMarkTaskComplete = project?.projectHead === session?.user.id;
+    const isProjectHead = typeof project?.projectHead === 'object' && project.projectHead?._id === session?.user?.id;
+    const canEditDetails = session?.user?.role === 'admin' || session?.user?.role === 'owner' || isProjectHead;
+    const canMarkTaskComplete = isProjectHead;
+    const canCreateTask = session?.user?.role === 'admin' || session?.user?.role === 'owner' || isProjectHead;
+    const canDeleteProject = session?.user?.role === 'admin' || session?.user?.role === 'owner';
+    const canDeleteTask = session?.user?.role === 'admin' || session?.user?.role === 'owner' || isProjectHead;
+
+    const handleDeleteProject = async () => {
+        if (!canDeleteProject) return;
+        if (!window.confirm('Are you sure you want to archive this project? This action can be undone by an admin or owner.')) return;
+        try {
+            const res = await fetch(`/api/projects/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                window.location.href = '/projects';
+            }
+        } catch (error) {
+            console.error('Failed to archive project', error);
+        }
+    };
+
+    const handleDeleteTask = async (taskId: string) => {
+        if (!canDeleteTask) return;
+        if (!window.confirm('Are you sure you want to delete this task?')) return;
+        try {
+            const res = await fetch(`/api/tasks/${taskId}`, { method: 'DELETE' });
+            if (res.ok) {
+                // Refetch the project to get updated tasks
+                const projectRes = await fetch(`/api/projects/${id}`);
+                if (projectRes.ok) {
+                    const updatedProject = await projectRes.json();
+                    setProject(updatedProject);
+                }
+            }
+        } catch (error) {
+            console.error('Failed to delete task', error);
+        }
+    };
 
     if (loading) {
         return <div>Loading...</div>;
@@ -121,9 +156,14 @@ const ProjectDetailsPage = () => {
                                     <Button className="bg-white/90 hover:bg-white text-blue-700 font-bold shadow flex items-center gap-2 px-4 py-2 rounded-lg text-sm"><ArrowTrendingUpIcon className="w-4 h-4" />Edit Project</Button>
                                 </Link>
                             )}
-                            <Link href={`/projects/${id}/tasks/create`}>
-                                <Button className="bg-blue-700 hover:bg-blue-800 text-white font-bold shadow flex items-center gap-2 px-4 py-2 rounded-lg text-sm"><PlusIcon className="w-4 h-4" />Add Task</Button>
-                            </Link>
+                            {canCreateTask && (
+                                <Link href={`/projects/${id}/tasks/create`}>
+                                    <Button className="bg-blue-700 hover:bg-blue-800 text-white font-bold shadow flex items-center gap-2 px-4 py-2 rounded-lg text-sm"><PlusIcon className="w-4 h-4" />Add Task</Button>
+                                </Link>
+                            )}
+                            {canDeleteProject && (
+                                <Button onClick={handleDeleteProject} className="bg-red-600 hover:bg-red-700 text-white font-bold shadow flex items-center gap-2 px-4 py-2 rounded-lg text-sm"><TrashIcon className="w-4 h-4" />Archive Project</Button>
+                            )}
                         </div>
                         <div className="flex gap-4 mt-2 text-indigo-100 text-xs">
                             <span className="flex items-center gap-1"><CalendarIcon className="w-4 h-4" />{new Date(project.startDate).toLocaleDateString()} - {new Date(project.endDate).toLocaleDateString()}</span>
@@ -193,6 +233,11 @@ const ProjectDetailsPage = () => {
                                                     <div className="flex items-center gap-2 font-semibold text-indigo-800 text-xs">
                                                         {task.status === 'Done' ? <CheckCircleIcon className="w-4 h-4 text-green-500" /> : <ClockIcon className="w-4 h-4 text-yellow-500" />}
                                                         {task.name}
+                                                        {canDeleteTask && (
+                                                            <button onClick={() => handleDeleteTask(task._id as string)} title="Delete Task" className="ml-auto text-red-500 hover:text-red-700 p-1 rounded">
+                                                                <TrashIcon className="w-4 h-4" />
+                                                            </button>
+                                                        )}
                                                     </div>
                                                     <div className="text-gray-600 text-xs">{task.description}</div>
                                                     <div className="text-xs text-gray-500">Assigned to: {typeof task.assignedTo === 'object' && task.assignedTo && 'name' in task.assignedTo ? (task.assignedTo as { name?: string }).name || 'Unassigned' : 'Unassigned'}</div>

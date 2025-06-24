@@ -27,9 +27,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <link rel="icon" href="/logo.png" type="image/png" />
-        <meta name="theme-color" content="#2563eb" />
-      </head>
+  <link rel="icon" href="/logo.ico" type="image/x-icon" />
+  <meta name="theme-color" content="#2563eb" />
+</head>
       <body className={`${inter.className} antialiased`}>
         <SessionProvider>{children}</SessionProvider>
       </body>
