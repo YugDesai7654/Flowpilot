@@ -71,11 +71,12 @@ const ProjectDetailsPage = () => {
         }
     };
     
-    const canEditDetails = session?.user?.role === 'admin' || session?.user?.role === 'owner' || project?.projectHead === session?.user.id;
-    const canMarkTaskComplete = project?.projectHead === session?.user.id;
-    const canCreateTask = session?.user?.role === 'admin' || session?.user?.role === 'owner' || project?.projectHead === session?.user.id;
+    const isProjectHead = typeof project?.projectHead === 'object' && project.projectHead?._id === session?.user?.id;
+    const canEditDetails = session?.user?.role === 'admin' || session?.user?.role === 'owner' || isProjectHead;
+    const canMarkTaskComplete = isProjectHead;
+    const canCreateTask = session?.user?.role === 'admin' || session?.user?.role === 'owner' || isProjectHead;
     const canDeleteProject = session?.user?.role === 'admin' || session?.user?.role === 'owner';
-    const canDeleteTask = session?.user?.role === 'admin' || session?.user?.role === 'owner' || project?.projectHead === session?.user.id;
+    const canDeleteTask = session?.user?.role === 'admin' || session?.user?.role === 'owner' || isProjectHead;
 
     const handleDeleteProject = async () => {
         if (!canDeleteProject) return;
