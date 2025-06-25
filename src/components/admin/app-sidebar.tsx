@@ -47,11 +47,11 @@ const data = {
       url: "/dashboard",
       icon: IconDashboard,
     },
-    {
-      title: "Lifecycle",
-      url: "#",
-      icon: IconListDetails,
-    },
+    // {
+    //   title: "Lifecycle",
+    //   url: "#",
+    //   icon: IconListDetails,
+    // },
     {
       title: "Transaction",
       url: "/dashboard/transaction",
@@ -129,12 +129,12 @@ const data = {
   navSecondary: [
     {
       title: "Settings",
-      url: "#",
+      url: "/dashboard/setting",
       icon: IconSettings,
     },
     {
       title: "Get Help",
-      url: "#",
+      url: "/dashboard/help",
       icon: IconHelp,
     },
     {
