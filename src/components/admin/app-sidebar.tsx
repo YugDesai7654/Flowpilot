@@ -12,7 +12,7 @@ import {
   IconFileWord,
   IconFolder,
   IconHelp,
-  IconListDetails,
+  // IconListDetails,
   IconReport,
   IconSearch,
   IconSettings,
