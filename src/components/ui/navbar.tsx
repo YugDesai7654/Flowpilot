@@ -227,7 +227,7 @@ export function Navbar() {
                       </div>
                     ) : (
                       <div className="space-y-2">
-                        <Link href="/login" onClick={() => setIsOpen(false)}>
+                        <Link href="/signup" onClick={() => setIsOpen(false)}>
                           <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
                             Sign In
                           </Button>

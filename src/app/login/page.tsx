@@ -68,8 +68,9 @@ export default function Login() {
         throw new Error('Invalid email or password');
       }
 
-      // Redirect to home page with full URL
-      window.location.href = 'http://localhost:3000/';
+      // Redirect using NextAuth result or fallback to home
+      const targetUrl = result?.url || '/';
+      window.location.assign(targetUrl);
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'An error occurred during login'
       setError(errorMessage);

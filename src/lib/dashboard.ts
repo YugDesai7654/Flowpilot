@@ -1,7 +1,7 @@
-import mongoose from "mongoose";
 import Transaction from "@/models/transactionModel";
 import { z } from "zod";
 import { schema } from "@/components/admin/transaction-table";
+import dbConnect from "@/dbConfing/dbConfing";
 
 type TransactionSchema = z.infer<typeof schema>;
 
@@ -11,9 +11,7 @@ type TransactionSchema = z.infer<typeof schema>;
 
 export async function getDashboardTransactions(companyId: string) {
   try {
-    if (mongoose.connection.readyState === 0) {
-      await mongoose.connect(process.env.MONGO_URL!);
-    }
+    await dbConnect();
 
     const transactions = await Transaction.find({ companyId: companyId }).lean();
     
@@ -45,9 +43,7 @@ export async function getDashboardTransactions(companyId: string) {
 // You can add more dashboard-related functions here
 export async function getDashboardStats(companyId: string) {
   try {
-    if (mongoose.connection.readyState === 0) {
-      await mongoose.connect(process.env.MONGO_URL!);
-    }
+    await dbConnect();
 
     const transactions = await Transaction.find({ companyId }).lean();
     

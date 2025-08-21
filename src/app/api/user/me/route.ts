@@ -3,15 +3,13 @@ import { cookies } from 'next/headers';
 import { verify } from 'jsonwebtoken';
 import User from '../../../../models/userModel';
 import Company from '../../../../models/companyModel';
-import mongoose from 'mongoose';
+import dbConnect from '../../../../dbConfing/dbConfing';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+const JWT_SECRET = process.env.NEXTAUTH_SECRET || 'your-secret-key';
 
 export async function GET() {
   try {
-    if (mongoose.connection.readyState === 0) {
-      await mongoose.connect(process.env.MONGO_URL!);
-    }
+    await dbConnect();
 
     const token = (await cookies()).get('token')?.value || '';
 

@@ -1,0 +1,3 @@
+MONGO_URL=mongodb+srv://hitsvnit:DnvZwXFh2rr56rCs@cluster0.eqemjaz.mongodb.net/flowpilot?retryWrites=true&w=majority&appName=Cluster0
+NEXTAUTH_SECRET=finance_management_secret_key_2024_secure
+NODE_ENV=development

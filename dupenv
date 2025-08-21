@@ -1,8 +1,0 @@
-# MongoDB Connection URL
-MONGO_URL=mongodb+srv://finance:RvBl7fXGDseKNJpB@finance01.aipujdi.mongodb.net/
-
-# JWT Secret for Authentication
-JWT_SECRET=finance_management_secret_key_2024_secure
-
-# Environment
-NODE_ENV=development

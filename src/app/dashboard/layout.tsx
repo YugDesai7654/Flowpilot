@@ -5,11 +5,13 @@ import dbConnect from "@/dbConfing/dbConfing"
 import User from "@/models/userModel"
 import Company from "@/models/companyModel"
 
+import { redirect } from "next/navigation"
+
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   // 1. Get session
   const session = await getServerSession(authOptions)
   if (!session?.user?.email) {
-    return <div>Error: Not authenticated</div>
+    redirect("/signup")
   }
 
   // 2. Connect to DB and fetch user
@@ -19,21 +21,21 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // Debug: log user
   if (!user) {
     console.error("User not found for email:", session.user.email)
-    return <div>Error: Could not retrieve user profile. Please log in again.</div>
+    redirect("/signup")
   }
   if (user.role === "employee") {
-    return <div>Error: You do not have permission to access this page.</div>
+    redirect("/profile")
   }
   if (!user.companyId) {
     console.error("companyId missing on user:", user)
-    return <div>Error: Could not retrieve company ID. Please log in again.</div>
+    redirect("/signup")
   }
 
   // 3. Fetch company using companyId (string, not ObjectId)
   const company = await Company.findOne({ companyId: user.companyId }).lean()
   if (!company) {
     console.error("Company not found for companyId:", user.companyId)
-    return <div>Error: Could not retrieve company info. Please log in again.</div>
+    redirect("/signup")
   }
 
   // 4. Serialize user and company for client components

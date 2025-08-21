@@ -19,27 +19,39 @@ declare module "next-auth" {
     user: UserSession;
   }
   interface User extends UserSession {
-    // Extend the User type with additional properties if needed
     [key: string]: unknown;
   }
 }
 
 declare module "next-auth/jwt" {
   interface JWT extends UserSession {
-    // Extend the JWT type with additional properties if needed
     [key: string]: unknown;
   }
 }
 
+// Check for required environment variables
+const requiredSecret = process.env.NEXTAUTH_SECRET
+if (!requiredSecret) {
+  throw new Error('NEXTAUTH_SECRET environment variable is not set. Please add it to your .env.local file.')
+}
+
+const requiredUrl = process.env.NEXTAUTH_URL
+if (!requiredUrl) {
+  throw new Error('NEXTAUTH_URL environment variable is not set. This is required for production.')
+}
+
+// Check if we're in production
+const isProduction = process.env.NODE_ENV === 'production'
+
 export const authOptions: NextAuthOptions = {
-  debug: false,
+  debug: false, // Disable debug in production
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   pages: {
-    signIn: "/signup",
-    error: "/signup",
+    signIn: "/login",
+    error: "/login",
   },
   providers: [
     CredentialsProvider({
@@ -51,38 +63,42 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         try {
           if (!credentials?.email || !credentials?.password) {
-            throw new Error('Please enter your email and password')
+            return null
           }
 
-          await dbConnect()
-          
+          // Database connection with proper error handling
+          try {
+            await dbConnect()
+          } catch (dbErr) {
+            console.error('Database connection error:', dbErr)
+            throw new Error('Service temporarily unavailable. Please try again later.')
+          }
+
           const user = await User.findOne({ email: credentials.email, isActive: true })
           
           if (!user) {
-            throw new Error('No user found with this email')
+            return null
           }
 
-          if (!user.isApproved && !user.isRejected) {
-            throw new Error('Your account is pending approval. Please wait for an admin to approve your request.')
+          if (!user.isApproved || user.isRejected) {
+            return null
           }
 
-          if (user.isRejected) {
-            throw new Error('Your account has been rejected. Please contact your company admin.')
-          }
-
-          // Compare password using bcrypt
           const isPasswordValid = await bcrypt.compare(credentials.password, user.password)
-
+          
           if (!isPasswordValid) {
-            console.error('Password validation failed for user:', user.email)
-            throw new Error('Invalid password')
+            return null
           }
 
           // Update last login
-          user.lastLogin = new Date()
-          await user.save()
+          try {
+            user.lastLogin = new Date()
+            await user.save()
+          } catch (saveErr) {
+            // Don't fail login if we can't save last login
+            console.warn('Failed to update last login:', saveErr)
+          }
 
-          // Create a type-safe user object
           const userData = {
             id: user._id.toString(),
             name: user.name || user.email.split('@')[0],
@@ -92,14 +108,10 @@ export const authOptions: NextAuthOptions = {
             companyName: user.companyName,
           }
 
-          console.log('User authenticated successfully:', userData.email)
           return userData
         } catch (error) {
-          console.error('Auth error:', error)
-          if (error instanceof Error) {
-            throw new Error(error.message)
-          }
-          throw new Error('Authentication failed')
+          console.error('Authentication error:', error)
+          throw new Error('Authentication failed. Please try again.')
         }
       },
     }),
@@ -130,8 +142,43 @@ export const authOptions: NextAuthOptions = {
       return session
     },
   },
-  secret: process.env.NEXTAUTH_SECRET || 'your-fallback-secret-key-here',
+  secret: requiredSecret,
   jwt: {
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
+  // Production security settings
+  cookies: {
+    sessionToken: {
+      name: isProduction ? '__Secure-next-auth.session-token' : 'next-auth.session-token',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: isProduction,
+        maxAge: 30 * 24 * 60 * 60, // 30 days
+      }
+    },
+    callbackUrl: {
+      name: isProduction ? '__Secure-next-auth.callback-url' : 'next-auth.callback-url',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: isProduction,
+        maxAge: 60 * 60, // 1 hour
+      }
+    },
+    csrfToken: {
+      name: isProduction ? '__Host-next-auth.csrf-token' : 'next-auth.csrf-token',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: isProduction,
+        maxAge: 60 * 60, // 1 hour
+      }
+    }
+  },
+  // Additional security for production
+  useSecureCookies: isProduction,
 } 
