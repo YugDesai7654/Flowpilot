@@ -21,7 +21,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
     console.error("User not found for email:", session.user.email)
     return <div>Error: Could not retrieve user profile. Please log in again.</div>
   }
-  if (user.role === "employee") {
+  // Allow admin, owner, and employee roles to access dashboard
+  if (!['admin', 'owner', 'employee'].includes(user.role)) {
     return <div>Error: You do not have permission to access this page.</div>
   }
   if (!user.companyId) {
