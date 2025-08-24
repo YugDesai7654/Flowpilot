@@ -3,16 +3,31 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { toast } from 'react-hot-toast';
-import { Copy, Loader2, Building2, Mail, Shield, Calendar, Clock, User as UserIcon } from 'lucide-react';
+import { 
+  Copy, 
+  Loader2, 
+  Building2, 
+  Mail, 
+  Shield, 
+  Calendar, 
+  Clock, 
+  User as UserIcon,
+  CheckCircle,
+  AlertCircle,
+  ArrowLeft,
+  ExternalLink,
+  Key,
+  Users,
+  Activity
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/ui/navbar';
-import { motion } from 'framer-motion';
 import { Separator } from '@/components/ui/separator';
-import { Avatar } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface UserProfile {
   email: string;
@@ -41,7 +56,6 @@ function ProfilePage() {
       if (!session?.user?.email) return;
       
       try {
-        console.log('Fetching user profile...');
         const response = await fetch('/api/user/profile', {
           method: 'GET',
           headers: {
@@ -50,11 +64,8 @@ function ProfilePage() {
           credentials: 'include',
         });
         
-        console.log('Profile response status:', response.status);
-        
         if (!response.ok) {
           if (response.status === 401) {
-            console.log('Unauthorized, redirecting to signup...');
             router.push('/signup');
             return;
           }
@@ -62,7 +73,6 @@ function ProfilePage() {
         }
         
         const data = await response.json();
-        console.log('Profile data received:', data);
         setUserProfile(data);
       } catch (error) {
         console.error('Profile fetch error:', error);
@@ -75,7 +85,6 @@ function ProfilePage() {
     if (status === 'authenticated') {
       fetchUserProfile();
     } else if (status === 'unauthenticated') {
-      console.log('User is not authenticated, redirecting to signup...');
       router.push('/signup');
     }
   }, [session, status, router]);
@@ -87,35 +96,22 @@ function ProfilePage() {
     }
   };
 
-  if ((status === 'loading' || status === 'unauthenticated') || loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-        <Navbar />
-        <div className="flex items-center justify-center min-h-[calc(100vh-4rem)]">
-          <div className="flex flex-col items-center gap-4">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-            <p className="text-gray-500">Loading profile...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const getRoleColor = (role: string) => {
+    switch (role) {
+      case 'owner': return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'admin': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'employee': return 'bg-green-100 text-green-800 border-green-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
 
-  if (!userProfile) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-        <Navbar />
-        <div className="flex items-center justify-center min-h-[calc(100vh-4rem)]">
-          <div className="text-center">
-            <p className="text-red-500 mb-4">Failed to load profile</p>
-            <Button onClick={() => router.push('/signup')}>
-              Return to Sign In
-            </Button>
-          </div>
-        </div>
-      </div>
+  const getStatusIcon = (isActive: boolean) => {
+    return isActive ? (
+      <CheckCircle className="h-4 w-4 text-green-600" />
+    ) : (
+      <AlertCircle className="h-4 w-4 text-red-600" />
     );
-  }
+  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -129,134 +125,323 @@ function ProfilePage() {
     });
   };
 
+  const getInitials = (email: string) => {
+    return email.split('@')[0].slice(0, 2).toUpperCase();
+  };
 
+  if ((status === 'loading' || status === 'unauthenticated') || loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="flex items-center justify-center min-h-[calc(100vh-4rem)]">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            <p className="text-gray-600 font-medium">Loading your profile...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!userProfile) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="flex items-center justify-center min-h-[calc(100vh-4rem)]">
+          <div className="text-center">
+            <p className="text-red-600 mb-4 font-medium">Failed to load profile</p>
+            <Button onClick={() => router.push('/signup')}>
+              Return to Sign In
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-100 to-white relative overflow-x-hidden">
-      <div className="absolute -top-32 -left-32 w-[500px] h-[500px] bg-gradient-to-br from-blue-400/30 to-indigo-400/20 rounded-full blur-3xl z-0" />
-      <div className="absolute top-1/2 right-0 w-[400px] h-[400px] bg-gradient-to-tr from-indigo-300/30 to-blue-200/10 rounded-full blur-2xl z-0" />
+    <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <div className="container mx-auto px-4 py-12 relative z-10">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7 }}
-          className="flex flex-col items-center mb-10"
-        >
-          <div className="relative flex items-center justify-center w-32 h-32 mx-auto">
-            <Avatar className="w-28 h-28 flex items-center justify-center border-4 border-white shadow-xl bg-gradient-to-br from-blue-500 to-indigo-600">
-              <span className="flex items-center justify-center w-full h-full">
-                <UserIcon className="h-14 w-14 text-white" />
-              </span>
+      
+      {/* Header Section */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center gap-4 mb-6">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.push('/dashboard')}
+              className="text-gray-600 hover:text-gray-900"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Dashboard
+            </Button>
+          </div>
+          
+          <div className="flex items-center gap-6">
+            <Avatar className="h-20 w-20 border-4 border-white shadow-lg">
+              <AvatarImage src="" alt={userProfile.email} />
+              <AvatarFallback className="text-xl font-semibold bg-gradient-to-br from-blue-600 to-indigo-600 text-white">
+                {getInitials(userProfile.email)}
+              </AvatarFallback>
             </Avatar>
-          </div>
-          <h1 className="mt-6 text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-blue-700 to-indigo-700 bg-clip-text text-transparent drop-shadow-lg">Welcome, {userProfile?.email?.split('@')[0] || 'User'}!</h1>
-          <p className="text-gray-500 mt-2 text-lg">Here&apos;s your account overview</p>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          <Card className="max-w-3xl mx-auto border-0 shadow-2xl bg-white/70 backdrop-blur-lg rounded-3xl p-1">
-            <CardHeader className="text-center space-y-2 pb-6">
-              <CardTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                Profile Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-gray-500">
-                    <Mail className="h-4 w-4" />
-                    <span className="text-sm font-medium">Email</span>
-                  </div>
-                  <p className="text-lg font-semibold text-gray-800">{userProfile.email}</p>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-gray-500">
-                    <Shield className="h-4 w-4" />
-                    <span className="text-sm font-medium">Role</span>
-                  </div>
-                  <Badge variant={userProfile.role === 'admin' ? 'default' : 'secondary'} className="text-sm px-3 py-1 rounded-full capitalize">
-                    {userProfile.role}
-                  </Badge>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-gray-500">
-                    <Building2 className="h-4 w-4" />
-                    <span className="text-sm font-medium">Company Name</span>
-                  </div>
-                  <p className="text-lg font-semibold text-gray-800">{userProfile.companyName}</p>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-gray-500">
-                    <Shield className="h-4 w-4" />
-                    <span className="text-sm font-medium">Status</span>
-                  </div>
-                  <Badge variant={userProfile.isActive ? 'success' : 'destructive'} className="text-sm px-3 py-1 rounded-full">
-                    {userProfile.isActive ? 'Active' : 'Inactive'}
-                  </Badge>
-                </div>
-                {(userProfile.role === 'admin' || userProfile.role === 'owner') && (
-                  <div className="space-y-2 col-span-2">
-                    <div className="flex items-center gap-2 text-gray-500">
-                      <Building2 className="h-4 w-4" />
-                      <span className="text-sm font-medium">Company ID</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg font-mono bg-gray-100 p-2 rounded flex-1 border border-gray-200">{userProfile.companyId}</span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={copyCompanyId}
-                        className="hover:bg-gray-200"
-                        aria-label="Copy Company ID"
-                      >
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                )}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-gray-500">
-                    <Clock className="h-4 w-4" />
-                    <span className="text-sm font-medium">Last Login</span>
-                  </div>
-                  <p className="text-lg text-gray-700">{formatDate(userProfile.lastLogin)}</p>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-gray-500">
-                    <Calendar className="h-4 w-4" />
-                    <span className="text-sm font-medium">Member Since</span>
-                  </div>
-                  <p className="text-lg text-gray-700">{formatDate(userProfile.createdAt)}</p>
-                </div>
-              </div>
-              <Separator className="my-6" />
-              <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                {userProfile.email.split('@')[0]}
+              </h1>
+              <p className="text-lg text-gray-600 mb-3">{userProfile.email}</p>
+              <div className="flex items-center gap-4">
+                <Badge className={`${getRoleColor(userProfile.role)} border`}>
+                  {userProfile.role.charAt(0).toUpperCase() + userProfile.role.slice(1)}
+                </Badge>
                 <div className="flex items-center gap-2">
-                  <UserIcon className="h-5 w-5 text-blue-500" />
-                  <span className="text-base font-medium text-gray-700">{userProfile.email}</span>
+                  {getStatusIcon(userProfile.isActive)}
+                  <span className={`text-sm font-medium ${userProfile.isActive ? 'text-green-600' : 'text-red-600'}`}>
+                    {userProfile.isActive ? 'Active' : 'Inactive'}
+                  </span>
                 </div>
-                <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold px-6 py-2 rounded-full shadow-lg hover:from-blue-700 hover:to-indigo-700 transition-all">
-                  Manage Account
-                </Button>
               </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </div>
-      <footer className="bg-white/70 backdrop-blur-lg border-t mt-16 shadow-inner">
-        <div className="container mx-auto px-4 py-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="text-gray-500 text-sm text-center md:text-left">
-            © {new Date().getFullYear()} FlowPilot. All rights reserved.
+            </div>
           </div>
-          <div className="flex gap-3 justify-center md:justify-end">
-            <Link href="/" className="text-blue-600 hover:underline text-sm">Home</Link>
-            <a href="/dashboard" className="text-blue-600 hover:underline text-sm">Dashboard</a>
-            <a href="/profile" className="text-blue-600 hover:underline text-sm">Profile</a>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          {/* Left Column - Personal Information */}
+          <div className="lg:col-span-2 space-y-6">
+            
+            {/* Personal Details Card */}
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <UserIcon className="h-5 w-5 text-blue-600" />
+                  Personal Information
+                </CardTitle>
+                <CardDescription>
+                  Your account details and preferences
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-500 flex items-center gap-2">
+                      <Mail className="h-4 w-4" />
+                      Email Address
+                    </label>
+                    <p className="text-gray-900 font-medium">{userProfile.email}</p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-500 flex items-center gap-2">
+                      <Shield className="h-4 w-4" />
+                      Account Role
+                    </label>
+                    <Badge className={`${getRoleColor(userProfile.role)} border`}>
+                      {userProfile.role.charAt(0).toUpperCase() + userProfile.role.slice(1)}
+                    </Badge>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-500 flex items-center gap-2">
+                      <Clock className="h-4 w-4" />
+                      Last Login
+                    </label>
+                    <p className="text-gray-900">{formatDate(userProfile.lastLogin)}</p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-500 flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      Member Since
+                    </label>
+                    <p className="text-gray-900">{formatDate(userProfile.createdAt)}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Company Information Card */}
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <Building2 className="h-5 w-5 text-blue-600" />
+                  Company Information
+                </CardTitle>
+                <CardDescription>
+                  Details about your organization
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-500 flex items-center gap-2">
+                      <Building2 className="h-4 w-4" />
+                      Company Name
+                    </label>
+                    <p className="text-gray-900 font-semibold text-lg">{userProfile.companyName}</p>
+                  </div>
+                  
+                  {(userProfile.role === 'admin' || userProfile.role === 'owner') && (
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-500 flex items-center gap-2">
+                        <Key className="h-4 w-4" />
+                        Company ID
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <code className="bg-gray-100 px-3 py-2 rounded-md text-sm font-mono text-gray-800 flex-1">
+                          {userProfile.companyId}
+                        </code>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={copyCompanyId}
+                          className="shrink-0"
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                <Separator />
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <Users className="h-4 w-4" />
+                    <span className="text-sm">Team Management</span>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => router.push('/dashboard/team')}>
+                    View Team
+                    <ExternalLink className="h-4 w-4 ml-2" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right Column - Quick Actions & Stats */}
+          <div className="space-y-6">
+            
+            {/* Account Status Card */}
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg">Account Status</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    {getStatusIcon(userProfile.isActive)}
+                    <div>
+                      <p className="font-medium text-gray-900">Account Status</p>
+                      <p className="text-sm text-gray-600">
+                        {userProfile.isActive ? 'Active and verified' : 'Account suspended'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Shield className="h-5 w-5 text-blue-600" />
+                    <div>
+                      <p className="font-medium text-gray-900">Access Level</p>
+                      <p className="text-sm text-gray-600 capitalize">{userProfile.role} permissions</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Quick Actions Card */}
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg">Quick Actions</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={() => router.push('/dashboard')}
+                >
+                  <Activity className="h-4 w-4 mr-2" />
+                  Go to Dashboard
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={() => router.push('/dashboard/team')}
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  View Team
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={() => router.push('/dashboard/setting')}
+                >
+                  <Shield className="h-4 w-4 mr-2" />
+                  Account Settings
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Account Summary Card */}
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg">Account Summary</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Role</span>
+                  <Badge className={`${getRoleColor(userProfile.role)} border`}>
+                    {userProfile.role.charAt(0).toUpperCase() + userProfile.role.slice(1)}
+                  </Badge>
+                </div>
+                
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Status</span>
+                  <span className={`font-medium ${userProfile.isActive ? 'text-green-600' : 'text-red-600'}`}>
+                    {userProfile.isActive ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
+                
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Member Since</span>
+                  <span className="text-gray-900 font-medium">
+                    {new Date(userProfile.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <footer className="bg-white border-t border-gray-200 mt-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="text-gray-500 text-sm">
+              © {new Date().getFullYear()} {userProfile.companyName}. All rights reserved.
+            </div>
+            <div className="flex gap-6 text-sm">
+              <Link href="/" className="text-blue-600 hover:text-blue-800 transition-colors">
+                Home
+              </Link>
+              <Link href="/dashboard" className="text-blue-600 hover:text-blue-800 transition-colors">
+                Dashboard
+              </Link>
+              <Link href="/profile" className="text-blue-600 hover:text-blue-800 transition-colors">
+                Profile
+              </Link>
+            </div>
           </div>
         </div>
       </footer>
