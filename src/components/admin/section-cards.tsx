@@ -1,7 +1,7 @@
 import type React from "react"
 import { useEffect, useState } from "react"
 import { IconTrendingDown, IconTrendingUp } from "@tabler/icons-react"
-import { ArrowDownRight, ArrowUpRight, DollarSign, Briefcase } from "lucide-react"
+import { ArrowDownRight, ArrowUpRight, DollarSign, Briefcase, TrendingUp, Banknote } from "lucide-react"
 import Link from "next/link"
 
 import { Badge } from "@/components/ui/badge"
@@ -23,101 +23,104 @@ interface MetricCardProps {
   description: string
   subtext: string
   icon: React.ReactNode
-  color: "emerald" | "rose" | "blue" | "violet" | "amber"
+  color: "emerald" | "rose" | "blue" | "slate" | "amber"
   className?: string
 }
 
-// Added colorStyles object
+// Professional color scheme - removed violet, added slate
 const colorStyles = {
   emerald: {
-    bgLight: "bg-white dark:bg-slate-950", // Changed to white background
-    bgDark: "bg-emerald-100 dark:bg-emerald-900/30",
-    text: "text-emerald-700 dark:text-emerald-400",
-    border: "border-emerald-200 dark:border-emerald-800",
-    icon: "bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400",
-    gradient: "from-emerald-50/30 to-transparent dark:from-emerald-950/20 dark:to-transparent", // Adjusted gradient opacity
+    bgLight: "bg-white",
+    bgDark: "bg-emerald-50",
+    text: "text-emerald-700",
+    border: "border-emerald-200",
+    icon: "bg-emerald-100 text-emerald-700",
+    gradient: "from-emerald-50/50 to-transparent",
   },
   rose: {
-    bgLight: "bg-white dark:bg-slate-950", // Changed to white background
-    bgDark: "bg-rose-100 dark:bg-rose-900/30",
-    text: "text-rose-700 dark:text-rose-400",
-    border: "border-rose-200 dark:border-rose-800",
-    icon: "bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-400",
-    gradient: "from-rose-50/30 to-transparent dark:from-rose-950/20 dark:to-transparent", // Adjusted gradient opacity
+    bgLight: "bg-white",
+    bgDark: "bg-rose-50",
+    text: "text-rose-700",
+    border: "border-rose-200",
+    icon: "bg-rose-100 text-rose-700",
+    gradient: "from-rose-50/50 to-transparent",
   },
   blue: {
-    bgLight: "bg-white dark:bg-slate-950", // Changed to white background
-    bgDark: "bg-blue-100 dark:bg-blue-900/30",
-    text: "text-blue-700 dark:text-blue-400",
-    border: "border-blue-200 dark:border-blue-800",
-    icon: "bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400",
-    gradient: "from-blue-50/30 to-transparent dark:from-blue-950/20 dark:to-transparent", // Adjusted gradient opacity
+    bgLight: "bg-white",
+    bgDark: "bg-blue-50",
+    text: "text-blue-700",
+    border: "border-blue-200",
+    icon: "bg-blue-100 text-blue-700",
+    gradient: "from-blue-50/50 to-transparent",
   },
-  violet: {
-    bgLight: "bg-white dark:bg-slate-950", // Changed to white background
-    bgDark: "bg-violet-100 dark:bg-violet-900/30",
-    text: "text-violet-700 dark:text-violet-400",
-    border: "border-violet-200 dark:border-violet-800",
-    icon: "bg-violet-100 dark:bg-violet-900/50 text-violet-700 dark:text-violet-400",
-    gradient: "from-violet-50/30 to-transparent dark:from-violet-950/20 dark:to-transparent", // Adjusted gradient opacity
+  slate: {
+    bgLight: "bg-white",
+    bgDark: "bg-slate-50",
+    text: "text-slate-700",
+    border: "border-slate-200",
+    icon: "bg-slate-100 text-slate-700",
+    gradient: "from-slate-50/50 to-transparent",
   },
-  amber: { // Added amber for completeness, though not used in the 4 cards
-    bgLight: "bg-white dark:bg-slate-950", // Changed to white background
-    bgDark: "bg-amber-100 dark:bg-amber-900/30",
-    text: "text-amber-700 dark:text-amber-400",
-    border: "border-amber-200 dark:border-amber-800",
-    icon: "bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-400",
-    gradient: "from-amber-50/30 to-transparent dark:from-amber-950/20 dark:to-transparent", // Adjusted gradient opacity
+  amber: {
+    bgLight: "bg-white",
+    bgDark: "bg-amber-50",
+    text: "text-amber-700",
+    border: "border-amber-200",
+    icon: "bg-amber-100 text-amber-700",
+    gradient: "from-amber-50/50 to-transparent",
   },
 }
 
-// Added MetricCard component
+// Professional MetricCard component
 function MetricCard({ title, value, change, trend, description, subtext, icon, color, className }: MetricCardProps) {
   const styles = colorStyles[color]
 
   return (
-    <Card className={cn("relative overflow-hidden transition-all hover:shadow-md border-transparent pb-8", styles.bgLight, className)}> {/* Added extra bottom padding */}
-      <div className={cn("absolute inset-0 opacity-50 bg-gradient-to-br", styles.gradient)} /> {/* Adjusted opacity for gradient */}
-      <CardHeader className="pb-2 relative z-10"> {/* Added relative z-10 */}
-        <div className="flex items-center justify-between">
-          <div className={cn("flex h-10 w-10 items-center justify-center rounded-full", styles.icon)}>{icon}</div>
-          <Badge
-            variant="outline"
-            className={cn(
-              "font-medium border", // Added border class for default outline variant
-              trend === "up"
-                ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800"
-                : "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/30 dark:text-rose-400 dark:border-rose-800",
-            )}
-          >
-            {trend === "up" ? (
-              <ArrowUpRight className="mr-1 h-3.5 w-3.5" />
-            ) : (
-              <ArrowDownRight className="mr-1 h-3.5 w-3.5" />
-            )}
-            {change}
-          </Badge>
+    <Card className={cn("relative overflow-hidden transition-all duration-300 hover:shadow-xl border-0 shadow-lg", styles.bgLight, className)}>
+      <div className={cn("absolute inset-0 opacity-20 bg-gradient-to-br", styles.gradient)} />
+      <CardHeader className="pb-3 relative z-10">
+        <div className="flex items-center justify-between mb-3">
+          <div className={cn("flex h-14 w-14 items-center justify-center rounded-xl shadow-md", styles.icon)}>
+            {icon}
+          </div>
+          {change && (
+            <Badge
+              variant="outline"
+              className={cn(
+                "font-medium text-xs px-3 py-1 rounded-full",
+                trend === "up"
+                  ? "bg-green-50 text-green-700 border-green-200"
+                  : "bg-red-50 text-red-700 border-red-200",
+              )}
+            >
+              {trend === "up" ? (
+                <ArrowUpRight className="mr-1 h-3 w-3" />
+              ) : (
+                <ArrowDownRight className="mr-1 h-3 w-3" />
+              )}
+              {change}
+            </Badge>
+          )}
         </div>
-        <CardDescription className="pt-3">{title}</CardDescription>
-        <CardTitle className="text-3xl font-bold tracking-tight">{value}</CardTitle>
+        <CardDescription className="text-sm font-medium text-gray-600 mb-2">{title}</CardDescription>
+        <CardTitle className="text-3xl font-bold text-gray-900">{value}</CardTitle>
       </CardHeader>
 
-      <CardFooter className="flex-col items-start gap-1.5 pt-0 relative z-10"> {/* Added relative z-10 */}
+      <CardFooter className="flex-col items-start gap-2 pt-0 relative z-10">
         <div
           className={cn(
-            "flex items-center gap-1 font-medium",
-            trend === "up" ? "text-emerald-700 dark:text-emerald-400" : "text-rose-700 dark:text-rose-400",
+            "flex items-center gap-2 text-sm font-medium",
+            trend === "up" ? "text-green-700" : "text-red-700",
           )}
         >
           {description}
           {trend === "up" ? <IconTrendingUp className="h-4 w-4" /> : <IconTrendingDown className="h-4 w-4" />}
         </div>
-        <div className="text-sm text-muted-foreground">{subtext}</div>
+        <div className="text-xs text-gray-500">{subtext}</div>
       </CardFooter>
     </Card>
   )
 }
-
 
 export function SectionCards() {
   const [bankBalance, setBankBalance] = useState<number | null>(null)
@@ -200,18 +203,18 @@ export function SectionCards() {
       trend: "up",
       description: "Total income from all transactions",
       subtext: "Sum of all completed income transactions",
-      icon: <DollarSign className="h-4 w-4" />,
+      icon: <DollarSign className="h-5 w-5" />,
       color: "emerald",
     },
     {
-      title: "Total Bank Balance",
+      title: "Bank Balance",
       value: loading ? "--" : formatCurrency(bankBalance),
       change: "",
       trend: "up",
       description: "Sum of all bank accounts",
       subtext: "Current balance across all banks",
-      icon: <DollarSign className="h-4 w-4" />,
-      color: "rose",
+      icon: <Banknote className="h-5 w-5" />,
+      color: "blue",
     },
     {
       title: "Active Projects",
@@ -220,8 +223,8 @@ export function SectionCards() {
       trend: "up",
       description: "Ongoing initiatives and tasks",
       subtext: "Tracking progress and milestones",
-      icon: <Briefcase className="h-4 w-4" />,
-      color: "blue",
+      icon: <Briefcase className="h-5 w-5" />,
+      color: "slate",
     },
     {
       title: "Growth Rate",
@@ -230,12 +233,13 @@ export function SectionCards() {
       trend: growthRate.trend,
       description: "Month-over-month revenue growth",
       subtext: "Compared to previous month",
-      icon: <IconTrendingUp className="h-4 w-4" />,
-      color: "violet",
+      icon: <TrendingUp className="h-5 w-5" />,
+      color: "amber",
     },
   ]
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 px-4 lg:px-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 px-4 lg:px-6">
       {cardsData.map((card) => {
         if (card.title === "Active Projects") {
           return (

@@ -35,11 +35,11 @@ export const description = "An interactive area chart showing monthly profit and
 const chartConfig = {
   profit: {
     label: "Profit",
-    color: "#10B981", // green
+    color: "#10B981", // Green for profit
   },
   cost: {
     label: "Cost",
-    color: "#EF4444", // red
+    color: "#EF4444", // Red for cost
   },
 } satisfies ChartConfig
 
@@ -121,11 +121,11 @@ export function ChartAreaInteractive({ companyId }: { companyId: string }) {
   }
 
   return (
-    <Card className="@container/card">
-      <CardHeader className="flex-row items-center justify-between">
+    <Card className="@container/card border border-gray-200 shadow-sm">
+      <CardHeader className="flex-row items-center justify-between pb-4">
         <div>
-          <CardTitle>Profit & Cost Analysis</CardTitle>
-          <CardDescription>{getCardDescription()}</CardDescription>
+          <CardTitle className="text-xl font-semibold text-gray-900">Profit & Cost Analysis</CardTitle>
+          <CardDescription className="text-gray-600">{getCardDescription()}</CardDescription>
         </div>
         <CardAction>
           <ToggleGroup
@@ -173,15 +173,15 @@ export function ChartAreaInteractive({ companyId }: { companyId: string }) {
           <AreaChart data={monthlyData}>
             <defs>
               <linearGradient id="fillProfit" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={chartConfig.profit.color} stopOpacity={1.0} />
+                <stop offset="5%" stopColor={chartConfig.profit.color} stopOpacity={0.8} />
                 <stop offset="95%" stopColor={chartConfig.profit.color} stopOpacity={0.1} />
               </linearGradient>
               <linearGradient id="fillCost" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={chartConfig.cost.color} stopOpacity={0.8} />
+                <stop offset="5%" stopColor={chartConfig.cost.color} stopOpacity={0.6} />
                 <stop offset="95%" stopColor={chartConfig.cost.color} stopOpacity={0.1} />
               </linearGradient>
             </defs>
-            <CartesianGrid vertical={false} />
+            <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#E5E7EB" />
             <XAxis
               dataKey="date"
               tickLine={false}
@@ -213,6 +213,7 @@ export function ChartAreaInteractive({ companyId }: { companyId: string }) {
               fill="url(#fillCost)"
               stroke={chartConfig.cost.color}
               stackId="a"
+              strokeWidth={2}
             />
             <Area
               dataKey="profit"
@@ -220,6 +221,7 @@ export function ChartAreaInteractive({ companyId }: { companyId: string }) {
               fill="url(#fillProfit)"
               stroke={chartConfig.profit.color}
               stackId="a"
+              strokeWidth={2}
             />
           </AreaChart>
         </ChartContainer>

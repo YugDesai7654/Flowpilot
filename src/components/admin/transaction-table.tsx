@@ -222,8 +222,10 @@ export default function TransactionTable({ data: initialData }: TransactionTable
   const [transactionToDelete, setTransactionToDelete] = React.useState<z.infer<typeof schema> | null>(null);
   const [transactionToEdit, setTransactionToEdit] = React.useState<z.infer<typeof schema> | null>(null);
   const [isNewTransactionFormOpen, setIsNewTransactionFormOpen] = React.useState(false);
+  const [isDeleting, setIsDeleting] = React.useState(false);
 
   const handleDelete = async (transaction: z.infer<typeof schema>) => {
+    setIsDeleting(true);
     try {
       const response = await fetch(`/api/transactions/${transaction._id}`, {
         method: 'DELETE',
@@ -245,6 +247,8 @@ export default function TransactionTable({ data: initialData }: TransactionTable
     } catch (error) {
       console.error('Error deleting transaction:', error);
       alert(error instanceof Error ? error.message : 'Failed to delete transaction');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -610,8 +614,9 @@ export default function TransactionTable({ data: initialData }: TransactionTable
             <AlertDialogAction
               onClick={() => transactionToDelete && handleDelete(transactionToDelete)}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isDeleting}
             >
-              Delete
+              {isDeleting ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

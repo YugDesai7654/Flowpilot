@@ -29,6 +29,7 @@ export default function EmployeesPage() {
   const [statusFilter, setStatusFilter] = useState<string>('pending');
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(10);
+  const [processingUser, setProcessingUser] = useState<string | null>(null);
 
   const fetchEmployees = async () => {
     setLoading(true);
@@ -51,29 +52,45 @@ export default function EmployeesPage() {
   }, []);
 
   const handleApprove = async (userId: string) => {
-    const res = await fetch('/api/user/employees/approve', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId })
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      setError(data.message || 'Failed to approve user');
+    setProcessingUser(userId);
+    try {
+      const res = await fetch('/api/user/employees/approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.message || 'Failed to approve user');
+      } else {
+        await fetchEmployees();
+      }
+    } catch (error) {
+      setError('Failed to approve user');
+    } finally {
+      setProcessingUser(null);
     }
-    fetchEmployees();
   };
 
   const handleReject = async (userId: string) => {
-    const res = await fetch('/api/user/employees/reject', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId })
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      setError(data.message || 'Failed to reject user');
+    setProcessingUser(userId);
+    try {
+      const res = await fetch('/api/user/employees/reject', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.message || 'Failed to reject user');
+      } else {
+        await fetchEmployees();
+      }
+    } catch (error) {
+      setError('Failed to reject user');
+    } finally {
+      setProcessingUser(null);
     }
-    fetchEmployees();
   };
 
   const filteredEmployees = employees.filter(emp => {
@@ -143,18 +160,18 @@ export default function EmployeesPage() {
                       <button
                         className="bg-green-500 text-white px-2 py-1 rounded mr-2 disabled:opacity-50"
                         onClick={() => handleApprove(emp._id)}
-                        disabled={emp.isApproved || emp.isRejected}
+                        disabled={emp.isApproved || emp.isRejected || processingUser === emp._id}
                         title={emp.isApproved ? 'Already approved' : emp.isRejected ? 'Already rejected' : ''}
                       >
-                        Approve
+                        {processingUser === emp._id ? 'Processing...' : 'Approve'}
                       </button>
                       <button
                         className="bg-red-500 text-white px-2 py-1 rounded disabled:opacity-50"
                         onClick={() => handleReject(emp._id)}
-                        disabled={emp.isApproved || emp.isRejected}
+                        disabled={emp.isApproved || emp.isRejected || processingUser === emp._id}
                         title={emp.isApproved ? 'Already approved' : emp.isRejected ? 'Already rejected' : ''}
                       >
-                        Reject
+                        {processingUser === emp._id ? 'Processing...' : 'Reject'}
                       </button>
                     </TableCell>
                   </TableRow>
