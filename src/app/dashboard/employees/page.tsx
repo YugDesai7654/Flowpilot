@@ -65,7 +65,7 @@ export default function EmployeesPage() {
       } else {
         await fetchEmployees();
       }
-    } catch (error) {
+    } catch {
       setError('Failed to approve user');
     } finally {
       setProcessingUser(null);
@@ -86,7 +86,7 @@ export default function EmployeesPage() {
       } else {
         await fetchEmployees();
       }
-    } catch (error) {
+    } catch {
       setError('Failed to reject user');
     } finally {
       setProcessingUser(null);

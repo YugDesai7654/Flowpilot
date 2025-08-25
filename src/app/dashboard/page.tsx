@@ -177,7 +177,7 @@ export default function Page() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-blue-900">
               <Target className="h-5 w-5" />
-              This Month's Focus
+              This Month&apos;s Focus
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
