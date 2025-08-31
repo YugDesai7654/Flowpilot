@@ -36,26 +36,27 @@ interface Bank {
 
 export default function BanksPage() {
   const [banks, setBanks] = useState<Bank[]>([])
-  const [loading, setLoading] = useState<boolean>(true)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [bankToDelete, setBankToDelete] = useState<Bank | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const fetchBanks = async () => {
+    setLoading(true)
     try {
-      setLoading(true)
-      const response = await fetch("/api/banks")
-      const data = await response.json()
-
+      const response = await fetch('/api/banks')
       if (response.ok) {
+        const data = await response.json()
         setBanks(data)
       } else {
-        setError(data.error || "Failed to fetch banks.")
+        const errorData = await response.json()
+        setError(errorData.error || "Failed to fetch banks.")
       }
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error'
-      setError("Network error or failed to load banks: " + errorMessage)
+      setError("Network error or failed to fetch banks: " + errorMessage)
     } finally {
       setLoading(false)
     }
@@ -78,6 +79,7 @@ export default function BanksPage() {
   const handleDeleteConfirm = async () => {
     if (!bankToDelete) return
 
+    setIsDeleting(true)
     try {
       const response = await fetch(`/api/banks/${bankToDelete._id}`, {
         method: 'DELETE',
@@ -93,6 +95,7 @@ export default function BanksPage() {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error'
       setError("Network error or failed to delete bank: " + errorMessage)
     } finally {
+      setIsDeleting(false)
       setDeleteDialogOpen(false)
       setBankToDelete(null)
     }
@@ -210,8 +213,9 @@ export default function BanksPage() {
                     size="sm" 
                     className="flex-1"
                     onClick={() => handleDeleteClick(bank)}
+                    disabled={isDeleting}
                   >
-                    Delete
+                    {isDeleting ? 'Deleting...' : 'Delete'}
                   </Button>
                 </div>
               </CardContent>
@@ -240,9 +244,9 @@ export default function BanksPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteConfirm}>
-              Delete
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} disabled={isDeleting}>
+              {isDeleting ? 'Deleting...' : 'Delete'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

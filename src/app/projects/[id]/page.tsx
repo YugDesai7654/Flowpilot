@@ -31,6 +31,8 @@ const ProjectDetailsPage = () => {
     const [project, setProject] = useState<ProjectWithTasks | null>(null);
     const [loading, setLoading] = useState(true);
     const { data: session } = useSession();
+    const [isDeletingProject, setIsDeletingProject] = useState(false);
+    const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null);
 
     useEffect(() => {
         if (id) {
@@ -81,6 +83,8 @@ const ProjectDetailsPage = () => {
     const handleDeleteProject = async () => {
         if (!canDeleteProject) return;
         if (!window.confirm('Are you sure you want to archive this project? This action can be undone by an admin or owner.')) return;
+        
+        setIsDeletingProject(true);
         try {
             const res = await fetch(`/api/projects/${id}`, { method: 'DELETE' });
             if (res.ok) {
@@ -88,12 +92,16 @@ const ProjectDetailsPage = () => {
             }
         } catch (error) {
             console.error('Failed to archive project', error);
+        } finally {
+            setIsDeletingProject(false);
         }
     };
 
     const handleDeleteTask = async (taskId: string) => {
         if (!canDeleteTask) return;
         if (!window.confirm('Are you sure you want to delete this task?')) return;
+        
+        setDeletingTaskId(taskId);
         try {
             const res = await fetch(`/api/tasks/${taskId}`, { method: 'DELETE' });
             if (res.ok) {
@@ -106,6 +114,8 @@ const ProjectDetailsPage = () => {
             }
         } catch (error) {
             console.error('Failed to delete task', error);
+        } finally {
+            setDeletingTaskId(null);
         }
     };
 
@@ -162,7 +172,14 @@ const ProjectDetailsPage = () => {
                                 </Link>
                             )}
                             {canDeleteProject && (
-                                <Button onClick={handleDeleteProject} className="bg-red-600 hover:bg-red-700 text-white font-bold shadow flex items-center gap-2 px-4 py-2 rounded-lg text-sm"><TrashIcon className="w-4 h-4" />Archive Project</Button>
+                                <Button 
+                                    onClick={handleDeleteProject} 
+                                    disabled={isDeletingProject}
+                                    className="bg-red-600 hover:bg-red-700 text-white font-bold shadow flex items-center gap-2 px-4 py-2 rounded-lg text-sm"
+                                >
+                                    <TrashIcon className="w-4 h-4" />
+                                    {isDeletingProject ? 'Archiving...' : 'Archive Project'}
+                                </Button>
                             )}
                         </div>
                         <div className="flex gap-4 mt-2 text-indigo-100 text-xs">
@@ -234,8 +251,17 @@ const ProjectDetailsPage = () => {
                                                         {task.status === 'Done' ? <CheckCircleIcon className="w-4 h-4 text-green-500" /> : <ClockIcon className="w-4 h-4 text-yellow-500" />}
                                                         {task.name}
                                                         {canDeleteTask && (
-                                                            <button onClick={() => handleDeleteTask(task._id as string)} title="Delete Task" className="ml-auto text-red-500 hover:text-red-700 p-1 rounded">
-                                                                <TrashIcon className="w-4 h-4" />
+                                                            <button 
+                                                                onClick={() => handleDeleteTask(task._id as string)} 
+                                                                disabled={deletingTaskId === task._id}
+                                                                title="Delete Task" 
+                                                                className="ml-auto text-red-500 hover:text-red-700 p-1 rounded disabled:opacity-50"
+                                                            >
+                                                                {deletingTaskId === task._id ? (
+                                                                    <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+                                                                ) : (
+                                                                    <TrashIcon className="w-4 h-4" />
+                                                                )}
                                                             </button>
                                                         )}
                                                     </div>

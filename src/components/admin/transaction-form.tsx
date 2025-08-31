@@ -74,6 +74,7 @@ interface TransactionFormProps {
 
 export function TransactionForm({ transaction, onSuccess, mode = 'create', open, onOpenChange }: TransactionFormProps) {
   const [error, setError] = React.useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [banks, setBanks] = React.useState<Bank[]>([])
   const [loadingBanks, setLoadingBanks] = React.useState(true)
 
@@ -154,6 +155,7 @@ export function TransactionForm({ transaction, onSuccess, mode = 'create', open,
   async function onSubmit(values: FormData) {
     try {
       setError(null)
+      setIsSubmitting(true)
       
       // Check if it's an expense and validate against bank balance
       if (values.type === 'expense') {
@@ -196,6 +198,8 @@ export function TransactionForm({ transaction, onSuccess, mode = 'create', open,
     } catch (error) {
       console.error('Error submitting form:', error)
       setError(error instanceof Error ? error.message : 'An unexpected error occurred')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -440,8 +444,8 @@ export function TransactionForm({ transaction, onSuccess, mode = 'create', open,
               <Button variant="outline" onClick={() => onOpenChange?.(false)}>
                 Cancel
               </Button>
-              <Button type="submit">
-                {mode === 'edit' ? 'Update Transaction' : 'Save Transaction'}
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Saving...' : (mode === 'edit' ? 'Update Transaction' : 'Save Transaction')}
               </Button>
             </div>
           </form>

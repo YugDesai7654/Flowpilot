@@ -45,7 +45,7 @@
 
 :root {
   --radius: 0.625rem;
-  --background: #f5f8ff;
+  --background: #f8fafc;
   --foreground: #1e293b;
   --card: #fff;
   --card-foreground: #1e293b;
@@ -53,29 +53,29 @@
   --popover-foreground: #1e293b;
   --primary: #2563eb;
   --primary-foreground: #fff;
-  --secondary: #a5b4fc;
+  --secondary: #64748b;
   --secondary-foreground: #1e293b;
-  --muted: #e0e7ff;
+  --muted: #f1f5f9;
   --muted-foreground: #64748b;
-  --accent: #818cf8;
+  --accent: #3b82f6;
   --accent-foreground: #fff;
   --destructive: #ef4444;
-  --border: #c7d2fe;
-  --input: #c7d2fe;
-  --ring: #6366f1;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #3b82f6;
   --chart-1: #2563eb;
-  --chart-2: #818cf8;
-  --chart-3: #38bdf8;
-  --chart-4: #fbbf24;
-  --chart-5: #22d3ee;
+  --chart-2: #3b82f6;
+  --chart-3: #0ea5e9;
+  --chart-4: #f59e0b;
+  --chart-5: #10b981;
   --sidebar: #1e293b;
   --sidebar-foreground: #1e293b;
   --sidebar-primary: #2563eb;
   --sidebar-primary-foreground: #fff;
-  --sidebar-accent: #818cf8;
+  --sidebar-accent: #3b82f6;
   --sidebar-accent-foreground: #fff;
   --sidebar-border: #334155;
-  --sidebar-ring: #6366f1;
+  --sidebar-ring: #3b82f6;
 }
 
 .dark {
@@ -87,29 +87,29 @@
   --popover-foreground: #f1f5f9;
   --primary: #60a5fa;
   --primary-foreground: #1e293b;
-  --secondary: #6366f1;
+  --secondary: #64748b;
   --secondary-foreground: #f1f5f9;
   --muted: #334155;
-  --muted-foreground: #a5b4fc;
-  --accent: #818cf8;
+  --muted-foreground: #94a3b8;
+  --accent: #3b82f6;
   --accent-foreground: #f1f5f9;
   --destructive: #ef4444;
   --border: #334155;
   --input: #334155;
-  --ring: #818cf8;
+  --ring: #3b82f6;
   --chart-1: #60a5fa;
-  --chart-2: #818cf8;
-  --chart-3: #38bdf8;
-  --chart-4: #fbbf24;
-  --chart-5: #22d3ee;
+  --chart-2: #3b82f6;
+  --chart-3: #0ea5e9;
+  --chart-4: #f59e0b;
+  --chart-5: #10b981;
   --sidebar: #0f172a;
   --sidebar-foreground: #f1f5f9;
   --sidebar-primary: #60a5fa;
   --sidebar-primary-foreground: #1e293b;
-  --sidebar-accent: #818cf8;
+  --sidebar-accent: #3b82f6;
   --sidebar-accent-foreground: #f1f5f9;
   --sidebar-border: #334155;
-  --sidebar-ring: #6366f1;
+  --sidebar-ring: #3b82f6;
 }
 
 @layer base {
