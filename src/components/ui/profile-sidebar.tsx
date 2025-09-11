@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { signOut } from "next-auth/react"
 
 interface UserProfile {
   id: string
@@ -53,12 +54,7 @@ export function ProfileSidebar() {
 
   const handleLogout = async () => {
     try {
-      const response = await fetch("/api/auth/logout", {
-        method: "POST",
-      })
-      if (response.ok) {
-        router.push("/signup")
-      }
+      await signOut({ callbackUrl: "/signup" })
     } catch (error) {
       console.error("Error logging out:", error)
     }
